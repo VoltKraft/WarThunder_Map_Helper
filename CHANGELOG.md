@@ -8,6 +8,31 @@ Both specifications were checked on their official websites for this update.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-09-26
+
+### Changed
+
+- Update Avalonia to 12.1.3 and SkiaSharp, including Linux native assets, to
+  4.152.1; refresh reviewed licenses and both offline Flatpak package feeds.
+- Update Microsoft.NET.Test.Sdk, xUnit 2, and the Visual Studio test runner.
+  Retain xUnit 3.2.2 for compatibility with Avalonia's headless test adapter.
+- Validate Windows MSI payload bytes and launch the extracted installer payload
+  on each native architecture before publication.
+
+### Fixed
+
+- Adapt SVG path construction, font glyph checks, screenshot encoding, and
+  test assertions to the updated library APIs.
+- Group related graphics dependency updates and defer incompatible xUnit major
+  updates until the Avalonia test adapter supports them.
+- Verify WinGet downloads against GitHub's per-asset SHA-256 digests.
+
+### Removed
+
+- Windows portable ZIPs, Linux tar.gz packages, and uploaded checksum text
+  files. Releases now contain Windows MSI and Linux Flatpak installers for
+  x64 and ARM64. GitHub's automatic source-code archive links remain available.
+
 ## [0.2.0] - 2026-09-26
 
 ### Added
@@ -58,5 +83,6 @@ automation; it does not claim an earlier GitHub release or tag exists.
 - Logic, integration, and Avalonia interaction tests, with recorded API
   fixtures and documented live-game validation limits.
 
-[Unreleased]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/VoltKraft/WarThunder_Map_Helper/releases/tag/v0.2.0

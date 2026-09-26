@@ -4,7 +4,7 @@ Downloads a published stable release's native MSIs and creates WinGet manifests.
 .DESCRIPTION
 Requires Python 3.11+, Windows Installer COM, and optionally GH_TOKEN for GitHub
 API requests. Public asset downloads never receive that token. Validates the
-complete release, SHA256SUMS, and actual MSI identity before writing manifests.
+complete release, GitHub asset SHA-256 digests, and actual MSI identity before writing manifests.
 Does not install the application, create a pull request, or publish anything.
 #>
 [CmdletBinding()]
@@ -34,11 +34,11 @@ $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$repository/rele
 if ($release.draft -or $release.prerelease -or $release.tag_name -cne $ReleaseTag -or -not $release.published_at) {
     throw 'The selected release must be published and stable.'
 }
-$expectedNames = @("SHA256SUMS-$version.txt")
+$expectedNames = @()
 foreach ($arch in @('x64', 'arm64')) {
-    $expectedNames += @("WarThunderMapHelper-$version-win-$arch.msi", "WarThunderMapHelper-$version-win-$arch-portable.zip", "WarThunderMapHelper-$version-linux-$arch.tar.gz", "WarThunderMapHelper-$version-linux-$arch.flatpak")
+    $expectedNames += @("WarThunderMapHelper-$version-win-$arch.msi", "WarThunderMapHelper-$version-linux-$arch.flatpak")
 }
-if ($release.assets.Count -ne $expectedNames.Count) { throw 'The release must contain all eight packages and checksums.' }
+if ($release.assets.Count -ne $expectedNames.Count) { throw 'The release must contain exactly four MSI and Flatpak packages.' }
 $assets = @{}
 foreach ($asset in $release.assets) {
     if ($asset.name -cnotin $expectedNames -or $assets.ContainsKey($asset.name) -or $asset.size -le 0 -or $asset.state -cne 'uploaded') {
@@ -46,20 +46,10 @@ foreach ($asset in $release.assets) {
     }
     $expectedUrl = "https://github.com/$repository/releases/download/$ReleaseTag/$($asset.name)"
     if ($asset.browser_download_url -cne $expectedUrl) { throw "Unexpected asset URL: $($asset.name)" }
+    if ($asset.digest -cnotmatch '^sha256:[0-9a-f]{64}$') { throw "Missing or invalid GitHub asset SHA-256: $($asset.name)" }
     $assets[$asset.name] = $asset
 }
 [void](New-Item -ItemType Directory -Path $output -Force)
-$checksumPath = Join-Path $output "SHA256SUMS-$version.txt"
-Invoke-WebRequest -Uri $assets["SHA256SUMS-$version.txt"].browser_download_url -OutFile $checksumPath
-$checksums = @{}
-foreach ($line in [IO.File]::ReadAllLines($checksumPath)) {
-    if ($line -cnotmatch '^([0-9a-fA-F]{64})  (WarThunderMapHelper-[A-Za-z0-9.-]+)$') { throw 'Invalid checksum line.' }
-    $name = $Matches[2]
-    if ($name -cnotin $expectedNames -or $checksums.ContainsKey($name)) { throw 'Unexpected checksum entry.' }
-    $checksums[$name] = $Matches[1]
-}
-if ($checksums.Count -ne 8) { throw 'SHA256SUMS must cover exactly eight packages.' }
-
 function Read-MsiIdentity([string]$Path) {
     $installer = New-Object -ComObject WindowsInstaller.Installer
     $database = $null; $view = $null; $summary = $null
@@ -89,7 +79,7 @@ foreach ($architecture in @('x64', 'arm64')) {
     $path = Join-Path $output $name
     Invoke-WebRequest -Uri $assets[$name].browser_download_url -OutFile $path
     $digest = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash
-    if ($digest -ine $checksums[$name]) { throw "Release checksum mismatch: $name" }
+    if ($digest -ine $assets[$name].digest.Substring(7)) { throw "Release checksum mismatch: $name" }
     $identity = Read-MsiIdentity $path
     $properties = $identity.Properties
     $platform = if ($architecture -eq 'arm64') { 'Arm64' } else { 'x64' }

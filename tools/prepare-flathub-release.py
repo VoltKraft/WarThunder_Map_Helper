@@ -67,7 +67,7 @@ def read_json(path: Path) -> object:
 
 
 def validate_release(release: object) -> str:
-    """Return a stable release tag after checking all eight packages and checksums."""
+    """Return a stable release tag after checking the four installer assets."""
     if not isinstance(release, dict):
         raise ManifestError("release input must be a GitHub release JSON object")
     tag = release.get("tag_name")
@@ -91,22 +91,17 @@ def validate_release(release: object) -> str:
         f"WarThunderMapHelper-{version}-win-arm64.msi",
         f"WarThunderMapHelper-{version}-linux-x64.flatpak",
         f"WarThunderMapHelper-{version}-linux-arm64.flatpak",
-        f"WarThunderMapHelper-{version}-win-x64-portable.zip",
-        f"WarThunderMapHelper-{version}-win-arm64-portable.zip",
-        f"WarThunderMapHelper-{version}-linux-x64.tar.gz",
-        f"WarThunderMapHelper-{version}-linux-arm64.tar.gz",
-        f"SHA256SUMS-{version}.txt",
     }
     assets = release.get("assets")
     if not isinstance(assets, list) or len(assets) != len(expected):
-        raise ManifestError("release must contain exactly the eight packages and checksum file")
+        raise ManifestError("release must contain exactly four MSI and Flatpak installers")
     names: set[str] = set()
     for asset in assets:
         if not isinstance(asset, dict):
             raise ManifestError("release assets must be JSON objects")
         name = asset.get("name")
         if not isinstance(name, str) or name not in expected or name in names:
-            raise ManifestError("release must contain exactly the eight packages and checksum file")
+            raise ManifestError("release must contain exactly four MSI and Flatpak installers")
         size = asset.get("size")
         if type(size) is not int or size <= 0 or asset.get("state") != "uploaded":
             raise ManifestError(f"release asset {name} must be nonempty and uploaded")

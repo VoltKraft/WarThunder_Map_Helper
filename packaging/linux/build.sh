@@ -33,8 +33,5 @@ python3 tools/install-flatpak-license-notices.py \
     --assets-file src/MapHelper.Desktop/obj/project.assets.json \
     --output-dir "$output/THIRD_PARTY_LICENSES" --supplemental-dir packaging/flatpak/licenses
 chmod +x "$output/WarThunderMapHelper"
-mkdir -p artifacts/release
-tar -czf "artifacts/release/WarThunderMapHelper-$version-$runtime.tar.gz" -C "$output" .
-python3 scripts/verify-release-archives.py "$version" --runtime "$runtime"
-(cd artifacts/release && sha256sum "WarThunderMapHelper-$version-$runtime.tar.gz" > "SHA256SUMS-$version-$runtime.txt")
-cat "artifacts/release/SHA256SUMS-$version-$runtime.txt"
+python3 scripts/verify-publish.py "$version" --runtime "$runtime"
+printf 'Native Linux validation payload: %s\n' "$output"

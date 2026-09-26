@@ -214,49 +214,45 @@ internal static class SvgIcon
     {
         float Read(string name) => Length(element.Attribute(name)?.Value ?? "0");
         float Positive(string name) => NonNegative(element.Attribute(name)?.Value ?? "0");
-        var path = new SKPath();
-        try
+        using var path = new SKPathBuilder();
+        switch (element.Name.LocalName)
         {
-            switch (element.Name.LocalName)
-            {
-                case "rect":
-                    var x = Read("x"); var y = Read("y");
-                    var width = Positive("width"); var height = Positive("height");
-                    var rx = NonNegative(element.Attribute("rx")?.Value ?? element.Attribute("ry")?.Value ?? "0");
-                    var ry = NonNegative(element.Attribute("ry")?.Value ?? element.Attribute("rx")?.Value ?? "0");
-                    // Empty SVG shapes must not become stroked degenerate paths in Skia.
-                    if (width == 0 || height == 0) break;
-                    path.AddRoundRect(SKRect.Create(x, y, width, height), Math.Min(rx, width / 2), Math.Min(ry, height / 2));
-                    break;
-                case "ellipse":
-                    var cx = Read("cx"); var cy = Read("cy"); var radiusX = Positive("rx"); var radiusY = Positive("ry");
-                    if (radiusX == 0 || radiusY == 0) break;
-                    path.AddOval(new(cx - radiusX, cy - radiusY, cx + radiusX, cy + radiusY));
-                    break;
-                case "circle":
-                    var centerX = Read("cx"); var centerY = Read("cy"); var radius = Positive("r");
-                    if (radius > 0) path.AddCircle(centerX, centerY, radius);
-                    break;
-                case "line": path.MoveTo(Read("x1"), Read("y1")); path.LineTo(Read("x2"), Read("y2")); break;
-                case "path":
-                    var data = element.Attribute("d")?.Value ?? "";
-                    if (data.Length > 131072) throw Invalid("SVG path is too complex");
-                    foreach (Match match in Numbers.Matches(data)) _ = Scalar(match.Value);
-                    if (data.Length == 0) break;
-                    using (var parsed = SKPath.ParseSvgPathData(data) ?? throw Invalid("Invalid SVG path")) path.AddPath(parsed);
-                    break;
-                case "polygon":
-                case "polyline":
-                    var coordinates = NumberList(element.Attribute("points")?.Value ?? "");
-                    if (coordinates.Length % 2 != 0) throw Invalid("Point coordinates require x/y pairs");
-                    for (var i = 0; i < coordinates.Length; i += 2)
-                        if (i == 0) path.MoveTo(coordinates[i], coordinates[i + 1]); else path.LineTo(coordinates[i], coordinates[i + 1]);
-                    if (element.Name.LocalName == "polygon") path.Close();
-                    break;
-            }
-            return path;
+            case "rect":
+                var x = Read("x"); var y = Read("y");
+                var width = Positive("width"); var height = Positive("height");
+                var rx = NonNegative(element.Attribute("rx")?.Value ?? element.Attribute("ry")?.Value ?? "0");
+                var ry = NonNegative(element.Attribute("ry")?.Value ?? element.Attribute("rx")?.Value ?? "0");
+                // Empty SVG shapes must not become stroked degenerate paths in Skia.
+                if (width == 0 || height == 0) break;
+                path.AddRoundRect(SKRect.Create(x, y, width, height), Math.Min(rx, width / 2), Math.Min(ry, height / 2));
+                break;
+            case "ellipse":
+                var cx = Read("cx"); var cy = Read("cy"); var radiusX = Positive("rx"); var radiusY = Positive("ry");
+                if (radiusX == 0 || radiusY == 0) break;
+                path.AddOval(new(cx - radiusX, cy - radiusY, cx + radiusX, cy + radiusY));
+                break;
+            case "circle":
+                var centerX = Read("cx"); var centerY = Read("cy"); var radius = Positive("r");
+                if (radius > 0) path.AddCircle(centerX, centerY, radius);
+                break;
+            case "line": path.MoveTo(Read("x1"), Read("y1")); path.LineTo(Read("x2"), Read("y2")); break;
+            case "path":
+                var data = element.Attribute("d")?.Value ?? "";
+                if (data.Length > 131072) throw Invalid("SVG path is too complex");
+                foreach (Match match in Numbers.Matches(data)) _ = Scalar(match.Value);
+                if (data.Length == 0) break;
+                using (var parsed = SKPath.ParseSvgPathData(data) ?? throw Invalid("Invalid SVG path")) path.AddPath(parsed);
+                break;
+            case "polygon":
+            case "polyline":
+                var coordinates = NumberList(element.Attribute("points")?.Value ?? "");
+                if (coordinates.Length % 2 != 0) throw Invalid("Point coordinates require x/y pairs");
+                for (var i = 0; i < coordinates.Length; i += 2)
+                    if (i == 0) path.MoveTo(coordinates[i], coordinates[i + 1]); else path.LineTo(coordinates[i], coordinates[i + 1]);
+                if (element.Name.LocalName == "polygon") path.Close();
+                break;
         }
-        catch { path.Dispose(); throw; }
+        return path.Detach();
     }
 
     private static SKMatrix ReadTransform(string? raw)

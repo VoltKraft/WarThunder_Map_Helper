@@ -1,6 +1,6 @@
 {
   "avalonia": {
-    "12.0.3": [
+    "12.1.3": [
       "Avalonia-LICENSE.md",
       "Avalonia-NOTICE.md"
     ]
@@ -11,79 +11,79 @@
     ]
   },
   "avalonia.desktop": {
-    "12.0.3": [
+    "12.1.3": [
       "Avalonia-LICENSE.md",
       "Avalonia-NOTICE.md"
     ]
   },
   "avalonia.fonts.inter": {
-    "12.0.3": [
+    "12.1.3": [
       "Avalonia-LICENSE.md",
       "Avalonia-NOTICE.md",
       "Inter-OFL.txt"
     ]
   },
   "avalonia.freedesktop": {
-    "12.0.3": [
+    "12.1.3": [
       "Avalonia-LICENSE.md",
       "Avalonia-NOTICE.md"
     ]
   },
   "avalonia.freedesktop.atspi": {
-    "12.0.3": [
+    "12.1.3": [
       "Avalonia-LICENSE.md",
       "Avalonia-NOTICE.md"
     ]
   },
   "avalonia.harfbuzz": {
-    "12.0.3": [
+    "12.1.3": [
       "Avalonia-LICENSE.md",
       "Avalonia-NOTICE.md"
     ]
   },
   "avalonia.native": {
-    "12.0.3": [
+    "12.1.3": [
       "Avalonia-LICENSE.md",
       "Avalonia-NOTICE.md"
     ]
   },
   "avalonia.remote.protocol": {
-    "12.0.3": [
+    "12.1.3": [
       "Avalonia-LICENSE.md",
       "Avalonia-NOTICE.md"
     ]
   },
   "avalonia.skia": {
-    "12.0.3": [
+    "12.1.3": [
       "Avalonia-LICENSE.md",
       "Avalonia-NOTICE.md"
     ]
   },
   "avalonia.themes.fluent": {
-    "12.0.3": [
+    "12.1.3": [
       "Avalonia-LICENSE.md",
       "Avalonia-NOTICE.md"
     ]
   },
   "avalonia.win32": {
-    "12.0.3": [
+    "12.1.3": [
       "Avalonia-LICENSE.md",
       "Avalonia-NOTICE.md"
     ]
   },
   "avalonia.x11": {
-    "12.0.3": [
+    "12.1.3": [
       "Avalonia-LICENSE.md",
       "Avalonia-NOTICE.md"
     ]
   },
   "microcom.runtime": {
-    "0.11.4": [
+    "0.11.6": [
       "MicroCom-LICENSE.txt"
     ]
   },
   "tmds.dbus.protocol": {
-    "0.92.0": [
+    "0.94.1": [
       "Tmds.DBus-LICENSE.txt"
     ]
   }

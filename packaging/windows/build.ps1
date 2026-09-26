@@ -37,17 +37,11 @@ try {
     Copy-Item -LiteralPath packaging/flatpak/screenshots/map.png -Destination $screenshots
     & $Python tools/install-flatpak-license-notices.py --assets-file src/MapHelper.Desktop/obj/project.assets.json --output-dir (Join-Path $publish 'THIRD_PARTY_LICENSES') --supplemental-dir packaging/flatpak/licenses
     if ($LASTEXITCODE -ne 0) { throw 'Third-party license collection failed.' }
+    & $Python scripts/verify-publish.py $Version --runtime $Runtime
+    if ($LASTEXITCODE -ne 0) { throw 'Publish payload verification failed.' }
     $platform = $Runtime.Substring(4)
     dotnet build packaging/windows/MapHelper.Setup.wixproj -c Release "-p:InstallerPlatform=$platform" "-p:PublishDir=$publish" -o $release
     if ($LASTEXITCODE -ne 0) { throw 'MSI build failed.' }
     & (Join-Path $projectRoot 'scripts\verify-msi.ps1') -MsiPath (Join-Path $release "WarThunderMapHelper-$Version-$Runtime.msi") -PublishDir $publish -Version $Version -Runtime $Runtime
-    $zip = Join-Path $release "WarThunderMapHelper-$Version-$Runtime-portable.zip"
-    Compress-Archive -Path (Join-Path $publish '*') -DestinationPath $zip -Force
-    & $Python scripts/verify-release-archives.py $Version --runtime $Runtime
-    if ($LASTEXITCODE -ne 0) { throw 'Portable archive verification failed.' }
-    $paths = @(Join-Path $release "WarThunderMapHelper-$Version-$Runtime.msi"; $zip)
-    $hashes = Get-FileHash -LiteralPath $paths -Algorithm SHA256
-    $hashes | ForEach-Object { $_.Hash.ToLowerInvariant() + '  ' + [IO.Path]::GetFileName($_.Path) } |
-        Set-Content -LiteralPath (Join-Path $release "SHA256SUMS-$Version-$Runtime.txt") -Encoding ascii
-    $hashes | Format-Table -AutoSize
+    Get-FileHash -LiteralPath (Join-Path $release "WarThunderMapHelper-$Version-$Runtime.msi") -Algorithm SHA256 | Format-Table -AutoSize
 } finally { Pop-Location }

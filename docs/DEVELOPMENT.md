@@ -9,8 +9,8 @@
 - Python 3.11 or newer for packaging and automation tests. No Python package is
   needed for the application itself. The optional branding exporter requires
   [Pillow](https://python-pillow.github.io/) and is not part of a normal build.
-- Git for source checkouts and release metadata. Bash, `tar`, and `sha256sum`
-  are required for native Linux archive packaging. Flatpak prerequisites are
+- Git for source checkouts and release metadata, and Bash for native Linux
+  validation builds. Flatpak prerequisites are
   listed in [Distribution](DISTRIBUTION.md).
 
 The solution contains application/test projects; Windows-only WiX authoring
@@ -58,6 +58,22 @@ Check or apply C# whitespace formatting:
 dotnet format whitespace WarThunderMapHelper.slnx --verify-no-changes --no-restore
 dotnet format whitespace WarThunderMapHelper.slnx --no-restore
 ```
+
+## Dependency updates
+
+Dependabot groups Avalonia and SkiaSharp updates because the managed rendering
+API and native libraries must be tested together. The direct Linux native Skia
+package must match the direct SkiaSharp version. Regenerate both architecture
+feeds and review the supplemental license catalog after runtime updates; see
+[Flatpak inputs](FLATPAK.md).
+
+The UI tests retain `xunit.v3` 3.2.2. Avalonia.Headless.XUnit 12.1.3 calls the
+3.x discovery API, which was removed in xUnit 4 and produces a
+`MissingMethodException` during discovery. Dependabot excludes major updates
+for this package until the Avalonia adapter supports that API. Recheck this
+restriction when updating the adapter; all 65 UI tests must be discovered and
+pass before removing it. Both test projects continue to use VSTest and the
+commands above.
 
 ## UI validation
 

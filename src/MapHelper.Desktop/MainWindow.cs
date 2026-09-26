@@ -133,7 +133,7 @@ public sealed class MainWindow : Window
                     }
                     var absolute = Path.GetFullPath(screenshot); Directory.CreateDirectory(Path.GetDirectoryName(absolute)!);
                     using var bitmap = new RenderTargetBitmap(new PixelSize((int)captureControl.Bounds.Width, (int)captureControl.Bounds.Height), new Vector(96, 96));
-                    bitmap.Render(captureControl); bitmap.Save(absolute);
+                    bitmap.Render(captureControl); bitmap.Save(absolute, PngBitmapEncoderOptions.Default);
                 }
                 catch (Exception ex) { AppPaths.Log(ex.ToString()); Environment.ExitCode = 2; }
                 finally { if (captureWindow != this) captureWindow.Close(); }

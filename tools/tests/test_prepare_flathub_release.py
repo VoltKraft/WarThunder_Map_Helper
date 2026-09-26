@@ -29,9 +29,8 @@ def release_payload() -> dict[str, object]:
             {"name": f"WarThunderMapHelper-2.11.0-{suffix}", "size": 123, "state": "uploaded"}
             for suffix in (
                 "win-x64.msi", "win-arm64.msi", "linux-x64.flatpak", "linux-arm64.flatpak",
-                "win-x64-portable.zip", "win-arm64-portable.zip", "linux-x64.tar.gz", "linux-arm64.tar.gz"
             )
-        ] + [{"name": "SHA256SUMS-2.11.0.txt", "size": 123, "state": "uploaded"}],
+        ],
     }
 
 

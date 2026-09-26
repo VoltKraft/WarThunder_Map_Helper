@@ -19,6 +19,11 @@
       "expression": "BSD-3-Clause",
       "sha256": "54aff7276217df9f6b5181613999d208c9e40d2b1d51bf55217837e6871a4a63",
       "source": "https://www.nuget.org/packages/Avalonia.Angle.Windows.Natives/2.1.25547.20250602/License"
+    },
+    "avalonia.angle.windows.natives/2.1.27548.20260419": {
+      "expression": "BSD-3-Clause",
+      "sha256": "54aff7276217df9f6b5181613999d208c9e40d2b1d51bf55217837e6871a4a63",
+      "source": "https://www.nuget.org/packages/Avalonia.Angle.Windows.Natives/2.1.27548.20260419/License"
     }
   }
 }

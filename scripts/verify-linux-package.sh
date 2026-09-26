@@ -10,11 +10,11 @@ case "$runtime:$(uname -m)" in
     linux-arm64:aarch64) multiarch=aarch64-linux-gnu ;;
     *) echo 'The package must be smoke-tested on its native architecture.' >&2; exit 1 ;;
 esac
-python3 scripts/verify-release-archives.py "$version" --runtime "$runtime"
+python3 scripts/verify-publish.py "$version" --runtime "$runtime"
 temporary="$(mktemp -d /tmp/wt-map-helper-package.XXXXXX)"
-tar -xzf "$root/artifacts/release/WarThunderMapHelper-$version-$runtime.tar.gz" -C "$temporary"
-test -x "$temporary/WarThunderMapHelper"
-test -s "$temporary/Assets/icons/Player.svg"
+appdir="$root/artifacts/publish/$runtime-$version"
+test -x "$appdir/WarThunderMapHelper"
+test -s "$appdir/Assets/icons/Player.svg"
 if [[ -d "$root/artifacts/linux-deps/root/usr/lib/$multiarch" ]]; then
     export LD_LIBRARY_PATH="$root/artifacts/linux-deps/root/usr/lib/$multiarch:${LD_LIBRARY_PATH:-}"
     export FONTCONFIG_PATH="$root/artifacts/linux-deps/root/etc/fonts"
@@ -22,7 +22,7 @@ if [[ -d "$root/artifacts/linux-deps/root/usr/lib/$multiarch" ]]; then
 fi
 mkdir -p "$root/artifacts/screenshots"
 screenshot="$root/artifacts/screenshots/$runtime-package-$version.png"
-timeout 120 "$temporary/WarThunderMapHelper" --demo --smoke-test \
+timeout 120 "$appdir/WarThunderMapHelper" --demo --smoke-test \
     --screenshot="$screenshot" --data-dir="$temporary/profile"
 test -s "$screenshot"
-printf 'Linux archive extracted and started successfully: %s\n' "$temporary"
+printf 'Native Linux publish payload started successfully: %s\n' "$appdir"

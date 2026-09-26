@@ -22,7 +22,7 @@ public class TelemetryTests
     public void CapturedEnemyAircraftAreEnemiesAndOwnMarkerIsSelf()
     {
         var objects = new TelemetryParser().ParseObjects(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "testflight-f16xl-map_obj.json")));
-        Assert.Single(objects.Where(o => o.Affiliation == Affiliation.Self));
+        Assert.Single(objects, o => o.Affiliation == Affiliation.Self);
         var aircraft = objects.Where(o => o.Type == "aircraft" && o.Icon != "Player").ToArray();
         Assert.NotEmpty(aircraft); Assert.All(aircraft, o => Assert.Equal(Affiliation.Enemy, o.Affiliation));
     }

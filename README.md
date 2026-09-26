@@ -19,12 +19,11 @@ Names, identifiers, and HUD messages supplied by the game remain unchanged.
 Find release assets on the
 [GitHub Releases page](https://github.com/VoltKraft/WarThunder_Map_Helper/releases).
 Choose the package for your operating system and processor architecture.
-Self-contained Windows and Linux archives include the .NET runtime.
+Windows MSI and Linux Flatpak packages include the .NET runtime.
 
-- **Windows:** install the MSI, or extract the entire portable ZIP and run
-  `WarThunderMapHelper.exe`. The MSI installs for the current user and creates
-  Start Menu and desktop shortcuts.
-- **Linux:** use the archive or Flatpak instructions in
+- **Windows:** install the MSI for your architecture. It installs for the
+  current user and creates Start Menu and desktop shortcuts.
+- **Linux:** install the Flatpak bundle using the instructions in
   [Distribution](docs/DISTRIBUTION.md). WinGet and Flathub availability and
   initial submission requirements are documented there.
 
@@ -75,7 +74,7 @@ documented in [Distribution](docs/DISTRIBUTION.md).
 - [Contributing](CONTRIBUTING.md) and [Code of conduct](CODE_OF_CONDUCT.md)
 - [Changelog](CHANGELOG.md) and [validation history](docs/VALIDATION.md)
 - [Security policy](SECURITY.md) and [third-party notices](THIRD_PARTY_NOTICES.md)
-- [Application artwork and reproducible exports](https://github.com/VoltKraft/WarThunder_Map_Helper/blob/v0.2.0/src/MapHelper.Desktop/Assets/branding/README.md)
+- [Application artwork and reproducible exports](https://github.com/VoltKraft/WarThunder_Map_Helper/blob/v0.2.1/src/MapHelper.Desktop/Assets/branding/README.md)
 
 Licensed under the [GNU Affero General Public License v3](LICENSE).
 

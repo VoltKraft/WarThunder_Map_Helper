@@ -28,10 +28,14 @@
   <screenshots>
     <screenshot type="default">
       <caption>Map and telemetry using sample data</caption>
-      <image>https://raw.githubusercontent.com/VoltKraft/WarThunder_Map_Helper/v0.2.0/packaging/flatpak/screenshots/map.png</image>
+      <image>https://raw.githubusercontent.com/VoltKraft/WarThunder_Map_Helper/v0.2.1/packaging/flatpak/screenshots/map.png</image>
     </screenshot>
   </screenshots>
   <releases>
+    <release version="0.2.1" date="2026-09-26">
+      <description><p>Updated graphics dependencies and Windows MSI and Linux
+      Flatpak installers for both supported architectures.</p></description>
+    </release>
     <release version="0.2.0" date="2026-09-26">
       <description><p>English interface and documentation, native x64 and ARM64
       release packages, and reproducible offline Flatpak builds.</p></description>

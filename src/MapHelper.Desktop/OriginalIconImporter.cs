@@ -70,7 +70,7 @@ internal static class OriginalIconImporter
                 using var skFont = new SKFont(face, 64);
                 foreach (var (name, glyph) in glyphs)
                 {
-                    if (!face.ContainsGlyphs(glyph)) continue;
+                    if (!skFont.ContainsGlyphs(glyph)) continue;
                     using var paint = new SKPaint { Color = SKColors.White, IsAntialias = true };
                     skFont.MeasureText(glyph, out var bounds);
                     using var surface = SKSurface.Create(new SKImageInfo(96, 96));

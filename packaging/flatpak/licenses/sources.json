@@ -1,10 +1,10 @@
 {
   "Avalonia-LICENSE.md": {
-    "url": "https://raw.githubusercontent.com/AvaloniaUI/Avalonia/21e816874efa142bf9903b51fd323d1f35e56ab3/licence.md",
+    "url": "https://raw.githubusercontent.com/AvaloniaUI/Avalonia/8eeda4f6f546165b3f72e63c9f42247abb306905/licence.md",
     "sha256": "213814d306090074d234d760239ff0f67eb9b8d20eefb4d5631bb39dbe0b769b"
   },
   "Avalonia-NOTICE.md": {
-    "url": "https://raw.githubusercontent.com/AvaloniaUI/Avalonia/21e816874efa142bf9903b51fd323d1f35e56ab3/NOTICE.md",
+    "url": "https://raw.githubusercontent.com/AvaloniaUI/Avalonia/8eeda4f6f546165b3f72e63c9f42247abb306905/NOTICE.md",
     "sha256": "dd6f80852d16320c865a2e403ffd1a8b07a0e34c5b37122c0bc2343639ff68e6"
   },
   "Avalonia.BuildServices-LICENSE.txt": {
@@ -12,11 +12,11 @@
     "sha256": "94162c40c663bd96ec1b870e6aba6ef0a43f44c9eb500807e7965e7078f6dc47"
   },
   "MicroCom-LICENSE.txt": {
-    "url": "https://raw.githubusercontent.com/kekekeks/MicroCom/28850f85fb586488828ab7267ed4a87e8c970b51/LICENSE",
+    "url": "https://raw.githubusercontent.com/kekekeks/MicroCom/76785efcafd91b5902fd19dd11145f6dd655b7b4/LICENSE",
     "sha256": "6ee769c9ac4dac9abb16b98b1341e9528ff9f4ab685481410d3376d14148f3a9"
   },
   "Tmds.DBus-LICENSE.txt": {
-    "url": "https://raw.githubusercontent.com/tmds/Tmds.DBus/282acebca8d4e4e3ba211646ac650911ee94edfd/COPYING",
+    "url": "https://raw.githubusercontent.com/tmds/Tmds.DBus/b4a7fed0b878f74cb54f7cca84d2889af4e596ba/COPYING",
     "sha256": "aca3b49277abcc7886ccb2f115603a9f5b15fc3f96019a10c00f2974098b210c"
   },
   "Inter-OFL.txt": {

@@ -5,6 +5,45 @@ observations. Commands are described in [Development](DEVELOPMENT.md) and
 [Distribution](DISTRIBUTION.md). Local checks do not establish successful
 GitHub Actions execution or publication to a package repository.
 
+## Version 0.2.1: local checks on 2026-09-26
+
+- All 194 application tests passed with Avalonia 12.1.3 and SkiaSharp 4.152.1:
+  129 logic/integration tests and 65 UI/rendering/import tests. xUnit 4 failed
+  discovery through Avalonia's adapter; the UI suite therefore retains 3.2.2.
+- Release tooling ran 35 tests (33 passed, two Unix/symlink checks skipped on
+  Windows); distribution tooling ran 91 tests (88 passed, three symlink checks
+  skipped). Formatting, Actionlint, PowerShell parsing, and diff checks passed.
+- The x64 MSI passed database/identity verification. Administrative extraction
+  produced 305 application files, all byte-identical to the publish payload.
+  The extracted application started with an isolated profile, exited normally,
+  and rendered an English Demo screenshot displaying version 0.2.1. Evidence:
+  `artifacts/msi-smoke-verification-win-x64.json` and
+  `artifacts/screenshots/win-x64-msi-0.2.1.png`. Extraction uses a short temporary
+  path because Windows Installer rejects deeply nested paths beyond MAX_PATH.
+- The desktop license gate and notice collector passed for 29 Windows publish
+  dependencies. Updated Avalonia, MicroCom, Tmds.DBus, and ANGLE license texts
+  were verified against authoritative sources; Skia's bundled native notices
+  are unchanged. Both regenerated Linux feeds contain 28 verified packages;
+  their merged offline feed contains 30 archives.
+- The revised WinGet preparation downloaded both published v0.2.0 MSIs,
+  matched GitHub's asset digests, inspected actual installer identities, and
+  generated manifests accepted by `winget validate`. The five retired archive
+  and checksum uploads were removed from v0.2.0; the four MSI/Flatpak assets
+  retained their original IDs and SHA-256 digests.
+
+These are local checks before the 0.2.1 push. Native Windows ARM64, both Linux
+architectures, and both complete Flatpak builds are required in hosted CI before
+release publication. This record does not claim an installed Flatpak/live-game
+test or store acceptance.
+
+## Version 0.2.0: hosted follow-up on 2026-09-26
+
+[CI run 36205331427](https://github.com/VoltKraft/WarThunder_Map_Helper/actions/runs/36205331427)
+passed on all four native desktop targets and both Flatpak architectures.
+The release and WinGet/Flathub preparation workflows completed successfully.
+WinGet submission remained disabled; Flathub preparation did not submit an app.
+The local-only limitations below describe the earlier validation snapshot.
+
 ## Version 0.2.0: local checks on 2026-09-26
 
 - The pinned .NET 10.0.401 SDK restored and built the solution in Release mode

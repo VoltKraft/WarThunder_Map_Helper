@@ -52,12 +52,12 @@ A push that keeps an already published version does not overwrite that release.
 For each `x64` and `arm64` architecture, the release contains:
 
 - `WarThunderMapHelper-<version>-win-<arch>.msi`
-- `WarThunderMapHelper-<version>-win-<arch>-portable.zip`
-- `WarThunderMapHelper-<version>-linux-<arch>.tar.gz`
 - `WarThunderMapHelper-<version>-linux-<arch>.flatpak`
 
-`SHA256SUMS-<version>.txt` covers all eight packages. A draft release is published
-only after the complete set is present. Release notes come from the matching
+A draft release is published only after all four installers are present and
+their SHA-256 hashes match GitHub asset digests. No separate checksum text file
+or portable archive is uploaded. GitHub still adds its automatic **Source code**
+ZIP and tar.gz links; these contain source code, not application packages. Release notes come from the matching
 changelog entry. Packages include the project license, third-party notices, and
 the collected dependency license texts. Windows MSI files are unsigned until a
 separately managed signing identity and signing workflow are configured.
@@ -89,27 +89,37 @@ for CI or a build immediately following successful relevant tests. The x64 host
 can cross-publish ARM64 packages, but actual ARM64 launch is validated on the
 native Windows ARM runner.
 
-On Linux, build the native target:
+Validate a Windows MSI on a host with the same architecture:
+
+```powershell
+./scripts/verify-windows-package.ps1 -Runtime win-x64
+```
+
+This administratively extracts the MSI without installing it, compares every
+extracted application file with the publish output, then starts it in demo mode
+with a separate profile. Logs, screenshots, and validation reports remain under
+`artifacts/`. Extracted files remain in a unique system temporary directory,
+recorded in the report, to avoid Windows Installer path-length limits. MSI
+extraction and application startup each time out after two minutes. Cross-built
+ARM64 installers require a native ARM64 host for this step.
+
+On Linux, prepare and smoke-test a native validation payload:
 
 ```bash
 bash packaging/linux/build.sh --runtime linux-x64
-bash packaging/linux/build.sh --runtime linux-arm64
+xvfb-run -a bash scripts/verify-linux-package.sh
 ```
 
-To create a Linux archive from Windows, cross-publish the selected runtime and
-immediately package that same runtime, before another publish replaces its
-restore graph:
+Use `linux-arm64` on an ARM64 host. The build writes an unpacked validation
+payload under `artifacts/publish/`; it does not create a release archive.
+`python scripts/verify-publish.py --runtime linux-x64` checks its architecture
+and required license files. User-facing Linux releases use the Flatpak build
+commands in [FLATPAK.md](FLATPAK.md).
 
-```powershell
-dotnet publish src/MapHelper.Desktop/MapHelper.Desktop.csproj -c Release -r linux-x64 --self-contained true -o artifacts/publish/linux-x64-0.2.0
-python packaging/linux/pack-from-windows.py --runtime linux-x64
-python scripts/verify-release-archives.py --runtime linux-x64
-```
-
-Change both the runtime and version in this example when appropriate. Run
-`python scripts/verify-release-archives.py` without `--runtime` only after all
-four portable archives and their publish directories exist. Flatpak build
-commands are in [FLATPAK.md](FLATPAK.md).
+Existing Windows archive users can install the MSI and retain the default
+profile location. If a custom `--data-dir` was used, continue to supply that
+path. Linux archive users moving to Flatpak should copy their profile as
+described in [Flatpak data migration](FLATPAK.md#data-migration).
 
 A manual **Release** run requires `ci_run_id`, the ID of a successful CI run
 triggered by a `main` push in this repository. The artifacts must still exist
@@ -123,7 +133,8 @@ numbers are deliberately not incremented automatically.
 
 Package identity: `VoltKraft.WarThunderMapHelper`. The **WinGet** workflow always
 prepares reviewable manifests from a published stable release. It requires the
-full nine-asset release, checks MSI SHA-256 against the release checksum file,
+complete four-installer release, checks downloaded MSI SHA-256 against the
+GitHub asset digests,
 and reads ProductCode, version, architecture, publisher, language, product name,
 and install scope from each actual MSI. Both native architectures are required.
 
@@ -131,7 +142,7 @@ The generated three-file manifest is uploaded as `winget-v<version>`. To prepare
 locally on Windows with Python 3.11+ and network access:
 
 ```powershell
-./tools/prepare-winget-release.ps1 -ReleaseTag v0.2.0 -OutputRoot artifacts/winget-review
+./tools/prepare-winget-release.ps1 -ReleaseTag v0.2.1 -OutputRoot artifacts/winget-review
 winget validate --manifest artifacts/winget-review/manifests
 ```
 
@@ -149,7 +160,7 @@ To enable automated submission after release preparation succeeds, configure:
 
 The existing `VoltKraft/winget-pkgs` fork can be reused. Tokens from another
 repository cannot be read or copied by this automation. Run **WinGet** manually
-with `release_tag=v0.2.0` and `submit=true` to submit a prepared first release, or
+with `release_tag=v0.2.1` and `submit=true` to submit a prepared first release, or
 let the release dispatch do so after enabling the settings. `submit=false` only
 prepares the artifact. The official Microsoft manifest creator is pinned by
 version and SHA-256; the token is passed through its supported environment

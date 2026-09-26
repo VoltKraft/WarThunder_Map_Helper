@@ -15,7 +15,7 @@ declared licenses, upstream sources, and the copied notice filenames.
 | .NET runtime | [MIT and bundled third-party notices](https://github.com/dotnet/runtime/blob/main/LICENSE.TXT) | Self-contained application runtime |
 | Avalonia 12 and its companion packages | [MIT](https://github.com/AvaloniaUI/Avalonia/blob/master/licence.md) | Desktop UI, windowing, headless tests |
 | SkiaSharp and HarfBuzzSharp | [MIT and bundled native notices](https://github.com/mono/SkiaSharp/blob/main/LICENSE.txt) | Graphics and text shaping |
-| ANGLE, through Avalonia's Windows native package | [BSD-3-Clause](https://www.nuget.org/packages/Avalonia.Angle.Windows.Natives/2.1.25547.20250602/License) and included upstream notices | Windows graphics translation |
+| ANGLE, through Avalonia's Windows native package | [BSD-3-Clause](https://www.nuget.org/packages/Avalonia.Angle.Windows.Natives/2.1.27548.20260419/License) and included upstream notices | Windows graphics translation |
 | Inter font | [SIL Open Font License 1.1](https://github.com/rsms/inter/blob/master/LICENSE.txt) | Embedded UI font; the Avalonia wrapper is MIT |
 | MicroCom.Runtime | [MIT](https://github.com/AvaloniaUI/MicroCom/blob/master/LICENSE) | Native interop |
 | Tmds.DBus.Protocol | [MIT](https://github.com/tmds/Tmds.DBus/blob/main/COPYING) | Linux desktop integration |

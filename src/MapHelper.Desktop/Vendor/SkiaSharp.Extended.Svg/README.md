@@ -22,8 +22,8 @@ surrounding application is AGPL-3.0-only.
 ## Local changes
 
 - Retain primitive/path construction, the transform approach, and all 148
-  upstream named colors; adapt them to SkiaSharp 3 APIs and disposable
-  per-render resources.
+  upstream named colors; adapt them to SkiaSharp 4 path-builder APIs and
+  disposable per-render resources.
 - Replace permissive parsing with an explicit element, attribute, and inline
   paint-style allowlist. Unsupported forms fail with PNG conversion guidance.
 - Reject resource references, CSS rules/classes, active content, nested

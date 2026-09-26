@@ -10,12 +10,12 @@ public sealed class MapDisplayTests
     public void ObservedBattlePalettesKeepSquadGreenAndAlliedShipsClassified()
     {
         var objects = new TelemetryParser().ParseObjects(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "battle-su30sm2-map_obj.json")));
-        Assert.Single(objects.Where(o => o.Color == "#39D921" && o.Affiliation == Affiliation.Squad));
-        Assert.Single(objects.Where(o => o.Color == "#134AFF" && o.Affiliation == Affiliation.Ally));
-        Assert.Single(objects.Where(o => o.Affiliation == Affiliation.Self));
+        Assert.Single(objects, o => o.Color == "#39D921" && o.Affiliation == Affiliation.Squad);
+        Assert.Single(objects, o => o.Color == "#134AFF" && o.Affiliation == Affiliation.Ally);
+        Assert.Single(objects, o => o.Affiliation == Affiliation.Self);
         foreach (var icon in new[] { "MissileCorvette", "MissileLightCruiser", "AircraftCarrier" })
         {
-            var ship = Assert.Single(objects.Where(o => o.Icon == icon));
+            var ship = Assert.Single(objects, o => o.Icon == icon);
             Assert.Equal("Ship", ship.IconClass); Assert.Equal(TargetCategory.Sea, TargetNavigation.Category(ship));
         }
         Assert.All(objects.Where(o => o.Icon == "Wheeled"), o => Assert.False(o.IsHuman));
@@ -114,7 +114,7 @@ public sealed class MapDisplayTests
     public void LiveTankTargetMarkerIsParsedButUnrelatedBackgroundNamesAreNotSelections()
     {
         var objects = new TelemetryParser().ParseObjects(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Fixtures", "battle-su30sm2-map_obj.json")));
-        var marked = Assert.Single(objects.Where(o => o.BackgroundIcon == "MediumTankTarget"));
+        var marked = Assert.Single(objects, o => o.BackgroundIcon == "MediumTankTarget");
         Assert.True(marked.ApiTargetMarked);
         Assert.False((marked with { BackgroundIcon = "none" }).ApiTargetMarked);
         Assert.False((marked with { BackgroundIcon = "FighterTarget" }).ApiTargetMarked);

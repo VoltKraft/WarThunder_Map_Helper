@@ -91,6 +91,17 @@ Install a replacement bundle with `flatpak install --user` to update a GitHub
 installation. These bundles do not configure an application update remote.
 Preserve the application data directory when changing distribution channels.
 
+## Data migration
+
+When switching from a native Linux archive, close both app instances and back
+up the existing profile. Copy its contents from
+`${XDG_CONFIG_HOME:-$HOME/.config}/WarThunderMapHelper/` (or the previous custom
+`--data-dir`) into the Flatpak profile directory listed above. Back up an
+existing destination before replacing files. Settings and relative icon paths
+keep their format; reimport icons that referred to absolute paths outside the
+sandbox. Start the Flatpak and verify settings and icons before removing the
+old profile. No automatic migration or deletion is performed.
+
 ## Maintenance and validation boundaries
 
 Update SDK pins from [Microsoft's official release metadata](https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json),

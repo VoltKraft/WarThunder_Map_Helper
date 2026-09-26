@@ -93,40 +93,31 @@ jobs:
         env:
           TARGET_RUNTIME: ${{ matrix.runtime }}
         run: ./packaging/windows/build.ps1 -Runtime $env:TARGET_RUNTIME -SkipTests
-      - name: Smoke-test extracted Windows portable archive
+      - name: Smoke-test extracted Windows MSI
         if: runner.os == 'Windows'
         shell: pwsh
         env:
           VERSION: ${{ needs.metadata.outputs.version }}
           TARGET_RUNTIME: ${{ matrix.runtime }}
         run: |
-          Expand-Archive -LiteralPath "artifacts/release/WarThunderMapHelper-$env:VERSION-$env:TARGET_RUNTIME-portable.zip" -DestinationPath artifacts/smoke-package
-          $app = (Resolve-Path artifacts/smoke-package/WarThunderMapHelper.exe).Path
-          New-Item -ItemType Directory -Path artifacts/screenshots -Force | Out-Null
-          $screenshot = Join-Path $PWD 'artifacts/screenshots/windows.png'
-          $profile = Join-Path $PWD 'artifacts/smoke-data'
-          $process = Start-Process -FilePath $app -ArgumentList '--demo','--smoke-test',"--screenshot=$screenshot","--data-dir=$profile" -PassThru -WindowStyle Hidden
-          if (-not $process.WaitForExit(120000)) { $process.Kill(); throw 'Windows smoke test timed out.' }
-          if ($process.ExitCode -ne 0 -or !(Test-Path -LiteralPath $screenshot)) { throw 'Windows smoke test failed.' }
-      - name: Build and verify Linux archive
+          ./scripts/verify-windows-package.ps1 -Version $env:VERSION -Runtime $env:TARGET_RUNTIME
+      - name: Build and verify native Linux payload
         if: runner.os == 'Linux'
         env:
           TARGET_RUNTIME: ${{ matrix.runtime }}
         run: bash packaging/linux/build.sh --runtime "$TARGET_RUNTIME" --skip-tests
-      - name: Smoke-test extracted Linux archive
+      - name: Smoke-test native Linux payload
         if: runner.os == 'Linux'
         env:
           VERSION: ${{ needs.metadata.outputs.version }}
           TARGET_RUNTIME: ${{ matrix.runtime }}
         run: xvfb-run -a bash scripts/verify-linux-package.sh "$VERSION" "$TARGET_RUNTIME"
-      - name: Upload verified packages
+      - name: Upload verified Windows installer
+        if: runner.os == 'Windows'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: map-helper-native-${{ matrix.runtime }}
-          path: |
-            artifacts/release/WarThunderMapHelper-*.msi
-            artifacts/release/WarThunderMapHelper-*-portable.zip
-            artifacts/release/WarThunderMapHelper-*.tar.gz
+          path: artifacts/release/WarThunderMapHelper-*.msi
           if-no-files-found: error
           retention-days: 14
           compression-level: 0

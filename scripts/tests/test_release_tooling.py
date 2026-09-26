@@ -4,22 +4,20 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
-import io
 from pathlib import Path
 import struct
+import os
 import sys
-import tarfile
 import tempfile
 import unittest
-import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import github_release as release
 from release_metadata import metadata, release_notes, validate_version
 
-spec = importlib.util.spec_from_file_location("verify_archives", Path(__file__).resolve().parents[1] / "verify-release-archives.py")
-archives = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(archives)
+spec = importlib.util.spec_from_file_location("verify_publish", Path(__file__).resolve().parents[1] / "verify-publish.py")
+payloads = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(payloads)
 
 SHA = "1" * 40
 OTHER_SHA = "2" * 40
@@ -98,8 +96,8 @@ class ReleasePolicyTests(unittest.TestCase):
             for name in release.expected_assets(VERSION):
                 (root / name).write_bytes(name.encode())
             checksums = release.checksums(root, VERSION)
-            self.assertEqual(8, len(checksums))
-            self.assertEqual(8, len((root / f"SHA256SUMS-{VERSION}.txt").read_text().splitlines()))
+            self.assertEqual(4, len(checksums))
+            self.assertFalse((root / f"SHA256SUMS-{VERSION}.txt").exists())
             missing = root / sorted(checksums)[0]
             missing.unlink()
             with self.assertRaisesRegex(ValueError, "missing="):
@@ -111,6 +109,21 @@ class ReleasePolicyTests(unittest.TestCase):
             (root / "unexpected.wixpdb").write_bytes(b"extra")
             with self.assertRaisesRegex(ValueError, "unexpected="):
                 release.checksums(root, VERSION)
+
+    def test_release_rejects_retired_downloads(self):
+        self.assertEqual({
+            f"WarThunderMapHelper-{VERSION}-win-x64.msi",
+            f"WarThunderMapHelper-{VERSION}-win-arm64.msi",
+            f"WarThunderMapHelper-{VERSION}-linux-x64.flatpak",
+            f"WarThunderMapHelper-{VERSION}-linux-arm64.flatpak",
+        }, set(release.expected_assets(VERSION)))
+        for retired in (f"SHA256SUMS-{VERSION}.txt", f"WarThunderMapHelper-{VERSION}-win-x64-portable.zip", f"WarThunderMapHelper-{VERSION}-linux-x64.tar.gz"):
+            with self.subTest(retired=retired), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                for name in [*release.expected_assets(VERSION), retired]:
+                    (root / name).write_bytes(b"data")
+                with self.assertRaisesRegex(ValueError, "unexpected="):
+                    release.checksums(root, VERSION)
 
 
 class FakeGitHub:
@@ -169,9 +182,9 @@ class PublicationTests(unittest.TestCase):
             (self.assets / name).write_bytes(name.encode())
         self.client = FakeGitHub()
 
-    def test_publication_is_last_mutation_after_all_nine_verified_assets(self):
+    def test_publication_is_last_mutation_after_all_four_verified_assets(self):
         self.assertEqual("published", release.publish(self.client, DETAILS, SHA, self.assets))
-        self.assertEqual(9, len(self.client.assets))
+        self.assertEqual(4, len(self.client.assets))
         self.assertEqual(("PATCH", "/releases/10"), self.client.mutations[-1])
         self.assertEqual(SHA, self.client.tag)
 
@@ -184,7 +197,7 @@ class PublicationTests(unittest.TestCase):
         self.assertEqual(2, len(self.client.assets))
         self.client.fail_upload_number = None
         release.publish(self.client, DETAILS, SHA, self.assets)
-        self.assertEqual(9, len(self.client.assets))
+        self.assertEqual(4, len(self.client.assets))
         self.assertFalse(self.client.current["draft"])
         self.assertEqual(1, self.client.mutations.count(("POST", "/releases")))
 
@@ -213,7 +226,7 @@ class PublicationTests(unittest.TestCase):
         self.assertEqual([], self.client.mutations)
 
 
-class ArchiveTests(unittest.TestCase):
+class PublishTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
@@ -227,54 +240,33 @@ class ArchiveTests(unittest.TestCase):
         elf[:6] = b"\x7fELF\x02\x01"
         struct.pack_into("<H", elf, 18, 183)
         (self.publish / "WarThunderMapHelper").write_bytes(elf)
-        self.archive = self.root / "artifacts/release/WarThunderMapHelper-1.2.3-linux-arm64.tar.gz"
-        self.archive.parent.mkdir(parents=True)
+        (self.publish / "WarThunderMapHelper").chmod(0o755)
 
-    def create_archive(self, *, mode=0o755, duplicate=False, extra=None):
-        with tarfile.open(self.archive, "w:gz") as archive:
-            for path in self.publish.rglob("*"):
-                if not path.is_file():
-                    continue
-                info = tarfile.TarInfo("./" + path.relative_to(self.publish).as_posix())
-                data = path.read_bytes()
-                info.size, info.mode = len(data), mode
-                archive.addfile(info, io.BytesIO(data))
-                if duplicate:
-                    archive.addfile(info, io.BytesIO(data))
-            if extra:
-                archive.addfile(extra, io.BytesIO(b""))
+    def test_complete_payload_passes(self):
+        self.assertEqual(5, payloads.verify_publish(self.root, VERSION, "linux-arm64")["files"])
 
-    def test_tar_dot_prefix_matches_linux_tar_output(self):
-        self.create_archive()
-        self.assertEqual(5, archives.verify_archive(self.root, VERSION, "linux-arm64")["files"])
+    def test_missing_notice_fails_closed(self):
+        (self.publish / "LICENSE").unlink()
+        with self.assertRaisesRegex(ValueError, "license files missing"):
+            payloads.verify_publish(self.root, VERSION, "linux-arm64")
 
-    def test_duplicate_and_missing_execute_bit_are_rejected(self):
-        self.create_archive(duplicate=True)
-        with self.assertRaisesRegex(ValueError, "Duplicate"):
-            archives.verify_archive(self.root, VERSION, "linux-arm64")
-        self.create_archive(mode=0o644)
+    @unittest.skipIf(os.name == "nt", "Unix executable mode requires a Unix filesystem")
+    def test_missing_execute_bit_is_rejected(self):
+        (self.publish / "WarThunderMapHelper").chmod(0o644)
         with self.assertRaisesRegex(ValueError, "executable bit"):
-            archives.verify_archive(self.root, VERSION, "linux-arm64")
+            payloads.verify_publish(self.root, VERSION, "linux-arm64")
 
-    def test_unsafe_paths_and_links_are_rejected(self):
-        for name in ("../../escape", "/absolute", "C:/absolute", "dir\\file"):
-            with self.subTest(name=name), self.assertRaises(ValueError):
-                archives.normalized_name(name)
-        link = tarfile.TarInfo("unexpected-link")
-        link.type, link.linkname = tarfile.SYMTYPE, "../../escape"
-        self.create_archive(extra=link)
-        with self.assertRaisesRegex(ValueError, "link"):
-            archives.verify_archive(self.root, VERSION, "linux-arm64")
+    def test_symbolic_links_are_rejected(self):
+        try:
+            (self.publish / "linked-license").symlink_to(self.publish / "LICENSE")
+        except OSError:
+            self.skipTest("Creating symbolic links is unavailable")
+        with self.assertRaisesRegex(ValueError, "symbolic links"):
+            payloads.verify_publish(self.root, VERSION, "linux-arm64")
 
     def test_wrong_native_architecture_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "architecture"):
-            archives.verify_architecture(self.publish / "WarThunderMapHelper", "linux-x64")
-
-    def test_changed_packaged_file_is_rejected(self):
-        self.create_archive()
-        (self.publish / "LICENSE").write_text("changed after packaging")
-        with self.assertRaisesRegex(ValueError, "differs"):
-            archives.verify_archive(self.root, VERSION, "linux-arm64")
+            payloads.verify_architecture(self.publish / "WarThunderMapHelper", "linux-x64")
 
     def test_pe_machine_is_checked_for_both_windows_runtimes(self):
         path = self.root / "app.exe"
@@ -285,9 +277,9 @@ class ArchiveTests(unittest.TestCase):
         for runtime, machine in (("win-x64", 0x8664), ("win-arm64", 0xAA64)):
             struct.pack_into("<H", header, 68, machine)
             path.write_bytes(header)
-            archives.verify_architecture(path, runtime)
+            payloads.verify_architecture(path, runtime)
             with self.assertRaises(ValueError):
-                archives.verify_architecture(path, "win-arm64" if runtime == "win-x64" else "win-x64")
+                payloads.verify_architecture(path, "win-arm64" if runtime == "win-x64" else "win-x64")
 
 
 if __name__ == "__main__":

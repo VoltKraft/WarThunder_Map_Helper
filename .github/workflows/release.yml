@@ -125,7 +125,7 @@ jobs:
         run: |
           {
             echo "Published $TAG from tested commit $TARGET_SHA."
-            echo "Packages came from CI run $CI_RUN_ID; SHA256SUMS lists all eight packages."
+            echo "All four MSI/Flatpak installers came from CI run $CI_RUN_ID and passed SHA-256 verification."
           } >> "$GITHUB_STEP_SUMMARY"
 
   distribution:

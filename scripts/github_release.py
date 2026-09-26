@@ -23,19 +23,18 @@ def expected_assets(version: str) -> set[str]:
     validate_version(version)
     prefix = f"WarThunderMapHelper-{version}"
     return {
-        *(f"{prefix}-win-{arch}{suffix}" for arch in ("x64", "arm64") for suffix in (".msi", "-portable.zip")),
-        *(f"{prefix}-linux-{arch}{suffix}" for arch in ("x64", "arm64") for suffix in (".tar.gz", ".flatpak")),
+        *(f"{prefix}-win-{arch}.msi" for arch in ("x64", "arm64")),
+        *(f"{prefix}-linux-{arch}.flatpak" for arch in ("x64", "arm64")),
     }
 
 
 def checksums(directory: Path, version: str) -> dict[str, str]:
-    """Require all eight artifacts, no additional files, and no empty payloads."""
+    """Hash exactly four installer assets without creating a public checksum file."""
     expected = expected_assets(version)
-    checksum_name = f"SHA256SUMS-{version}.txt"
     files = list(directory.iterdir())
     if any(not path.is_file() or path.is_symlink() for path in files):
         raise ValueError("Release directory must contain regular files only.")
-    actual = {path.name for path in files} - {checksum_name}
+    actual = {path.name for path in files}
     if actual != expected:
         raise ValueError(f"Incorrect release assets; missing={sorted(expected - actual)}, unexpected={sorted(actual - expected)}")
     result = {}
@@ -45,7 +44,6 @@ def checksums(directory: Path, version: str) -> dict[str, str]:
             raise ValueError(f"Empty release asset: {name}")
         with path.open("rb") as content:
             result[name] = hashlib.file_digest(content, "sha256").hexdigest()
-    (directory / checksum_name).write_text("".join(f"{digest}  {name}\n" for name, digest in result.items()), encoding="ascii")
     return result
 
 
@@ -157,8 +155,6 @@ def inspect_release(client: GitHub, details: dict[str, str], sha: str) -> tuple[
 
 def publish(client: GitHub, details: dict[str, str], sha: str, directory: Path) -> str:
     local = checksums(directory, details["version"])
-    checksum_name = f"SHA256SUMS-{details['version']}.txt"
-    local[checksum_name] = hashlib.sha256((directory / checksum_name).read_bytes()).hexdigest()
     state, release = inspect_release(client, details, sha)
     if state in ("published", "obsolete"):
         return state
