@@ -1,0 +1,92 @@
+# GitHub Flatpak build manifest. See docs/DISTRIBUTION.md before Flathub submission.
+app-id: io.github.voltkraft.WarThunder_Map_Helper
+runtime: org.freedesktop.Platform
+runtime-version: "26.08"
+sdk: org.freedesktop.Sdk
+command: war-thunder-map-helper
+
+finish-args:
+  - --share=ipc
+  - --socket=x11
+  - --share=network
+  - --device=dri
+
+build-options:
+  append-path: /run/build/map-helper/dotnet-sdk
+  env:
+    DOTNET_ROOT: /run/build/map-helper/dotnet-sdk
+    DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+    DOTNET_NOLOGO: "1"
+    DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "1"
+
+modules:
+  - name: map-helper
+    buildsystem: simple
+    build-commands:
+      - |
+        case "${FLATPAK_ARCH}" in
+          x86_64) dotnet_runtime=linux-x64 ;;
+          aarch64) dotnet_runtime=linux-arm64 ;;
+          *) echo "Unsupported Flatpak architecture: ${FLATPAK_ARCH}" >&2; exit 1 ;;
+        esac
+        test -n "$(find "dotnet-sdk/packs/Microsoft.NETCore.App.Host.${dotnet_runtime}" -type f -name apphost -print -quit)"
+        dotnet publish src/MapHelper.Desktop/MapHelper.Desktop.csproj \
+          --configuration Release --runtime "${dotnet_runtime}" \
+          --self-contained true --source ./nuget-sources \
+          -p:NuGetAudit=false -p:PublishSingleFile=false -p:UseAppHost=true \
+          --output ${FLATPAK_DEST}/lib/war-thunder-map-helper
+      - python3 scripts/check_dependency_licenses.py --assets src/MapHelper.Desktop/obj/project.assets.json
+      - install -dm755 ${FLATPAK_DEST}/bin
+      - ln -s /app/lib/war-thunder-map-helper/WarThunderMapHelper ${FLATPAK_DEST}/bin/war-thunder-map-helper
+      - install -Dm644 packaging/flatpak/io.github.voltkraft.WarThunder_Map_Helper.desktop ${FLATPAK_DEST}/share/applications/io.github.voltkraft.WarThunder_Map_Helper.desktop
+      - install -Dm644 packaging/flatpak/io.github.voltkraft.WarThunder_Map_Helper.metainfo.xml ${FLATPAK_DEST}/share/metainfo/io.github.voltkraft.WarThunder_Map_Helper.metainfo.xml
+      - install -Dm644 src/MapHelper.Desktop/Assets/branding/app-logo-512.png ${FLATPAK_DEST}/share/icons/hicolor/512x512/apps/io.github.voltkraft.WarThunder_Map_Helper.png
+      - install -Dm644 LICENSE ${FLATPAK_DEST}/share/licenses/io.github.voltkraft.WarThunder_Map_Helper/LICENSE
+      - install -Dm644 THIRD_PARTY_NOTICES.md ${FLATPAK_DEST}/share/licenses/io.github.voltkraft.WarThunder_Map_Helper/THIRD_PARTY_NOTICES.md
+      - python3 tools/install-flatpak-license-notices.py --source-dir nuget-sources --output-dir ${FLATPAK_DEST}/share/licenses/io.github.voltkraft.WarThunder_Map_Helper/nuget --supplemental-dir packaging/flatpak/licenses
+    sources:
+      # CI replaces the local source with an immutable commit. Release
+      # preparation also records the matching stable tag.
+      - type: dir
+        path: ../../..
+        # Directory-source exclusions are literal relative paths, not globs.
+        skip:
+          - .git
+          - .build-cache
+          - artifacts
+          - .flatpak-builder
+          - .vs
+          - .venv
+          - build-dir
+          - repo
+          - TestResults
+          - src/MapHelper.Core/bin
+          - src/MapHelper.Core/obj
+          - src/MapHelper.Desktop/bin
+          - src/MapHelper.Desktop/obj
+          - src/MapHelper.Telemetry/bin
+          - src/MapHelper.Telemetry/obj
+          - tests/MapHelper.Tests/bin
+          - tests/MapHelper.Tests/obj
+          - tests/MapHelper.UiTests/bin
+          - tests/MapHelper.UiTests/obj
+          - packaging/windows/bin
+          - packaging/windows/obj
+          - tools/__pycache__
+          - tools/tests/__pycache__
+          - scripts/__pycache__
+          - scripts/tests/__pycache__
+      # Build-only SDK pins from official Microsoft release metadata.
+      - type: archive
+        dest: dotnet-sdk
+        strip-components: 0
+        only-arches: [x86_64]
+        url: https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.401/dotnet-sdk-10.0.401-linux-x64.tar.gz
+        sha512: 51c8b999af9e8dd9998c9edc5944e19a90788862068acd38694e098889054ce8c23d4f0c5cccfa16bf187d044562359e5ee69a9f8ad0bbe913ba90311fbce25b
+      - type: archive
+        dest: dotnet-sdk
+        strip-components: 0
+        only-arches: [aarch64]
+        url: https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.401/dotnet-sdk-10.0.401-linux-arm64.tar.gz
+        sha512: 58ace73ced6b4360754689a686bdfb8a317f4da6cb8bb416dbc7d0ba9f47e43e3c09f5eb1f1a1cfaacbd10df9558da4882bf2a5e195d6ab56a02c1f9f76102ed
+      - nuget-sources.json

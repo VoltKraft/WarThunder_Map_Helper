@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.voltkraft.WarThunder_Map_Helper</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>AGPL-3.0-only</project_license>
+  <name>War Thunder Map Helper</name>
+  <summary>View local flight telemetry and map contacts</summary>
+  <developer id="io.github.voltkraft"><name>VoltKraft</name></developer>
+  <description>
+    <p>An unofficial companion window for War Thunder that displays the map,
+    visible contacts, local flight telemetry, and approximate range estimates.
+    It uses only the game's optional local HTTP telemetry service.</p>
+    <p>Start a supported flight or test flight with the game's local telemetry
+    service available on port 8111. An explicit demo mode provides sample data
+    when the game or service is unavailable. Live data availability depends on
+    the game mode and data exposed by the game.</p>
+    <p>This independent project is not affiliated with or endorsed by Gaijin
+    Entertainment. War Thunder is a trademark of its respective owner.</p>
+  </description>
+  <launchable type="desktop-id">io.github.voltkraft.WarThunder_Map_Helper.desktop</launchable>
+  <url type="homepage">https://github.com/VoltKraft/WarThunder_Map_Helper</url>
+  <url type="bugtracker">https://github.com/VoltKraft/WarThunder_Map_Helper/issues</url>
+  <url type="help">https://github.com/VoltKraft/WarThunder_Map_Helper/blob/main/README.md</url>
+  <url type="vcs-browser">https://github.com/VoltKraft/WarThunder_Map_Helper</url>
+  <categories><category>Utility</category></categories>
+  <content_rating type="oars-1.1" />
+  <supports><control>pointing</control><control>keyboard</control></supports>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Map and telemetry using sample data</caption>
+      <image>https://raw.githubusercontent.com/VoltKraft/WarThunder_Map_Helper/v0.2.0/packaging/flatpak/screenshots/map.png</image>
+    </screenshot>
+  </screenshots>
+  <releases>
+    <release version="0.2.0" date="2026-09-26">
+      <description><p>English interface and documentation, native x64 and ARM64
+      release packages, and reproducible offline Flatpak builds.</p></description>
+    </release>
+  </releases>
+</component>

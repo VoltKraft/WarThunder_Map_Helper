@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="src/MapHelper.Core/MapHelper.Core.csproj" />
+  <Project Path="src/MapHelper.Telemetry/MapHelper.Telemetry.csproj" />
+  <Project Path="src/MapHelper.Desktop/MapHelper.Desktop.csproj" />
+  <Project Path="tests/MapHelper.Tests/MapHelper.Tests.csproj" />
+  <Project Path="tests/MapHelper.UiTests/MapHelper.UiTests.csproj" />
+</Solution>

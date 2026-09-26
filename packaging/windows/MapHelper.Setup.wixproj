@@ -1,0 +1,22 @@
+<Project Sdk="WixToolset.Sdk/6.0.2">
+  <PropertyGroup>
+    <TargetFramework></TargetFramework>
+    <InstallerPlatform Condition="'$(InstallerPlatform)' == ''">x64</InstallerPlatform>
+    <OutputName>WarThunderMapHelper-$(Version)-win-$(InstallerPlatform)</OutputName>
+    <IntermediateOutputPath>obj\$(InstallerPlatform)\$(Configuration)\</IntermediateOutputPath>
+    <DefineConstants>PublishDir=$(PublishDir);ProductVersion=$(Version);InstallerArchitecture=$(InstallerPlatform)</DefineConstants>
+    <!-- Nextcloud Virtual Files cannot synchronize WiX output hardlinks. -->
+    <CreateHardLinksForCopyFilesToOutputDirectoryIfPossible>false</CreateHardLinksForCopyFilesToOutputDirectoryIfPossible>
+    <CreateSymbolicLinksForCopyFilesToOutputDirectoryIfPossible>false</CreateSymbolicLinksForCopyFilesToOutputDirectoryIfPossible>
+    <!-- This package is strictly per-user; ICE91's per-machine scenario is not applicable. -->
+    <SuppressIces>ICE91</SuppressIces>
+  </PropertyGroup>
+  <Target Name="ValidatePackageInputs" BeforeTargets="BeforeBuild">
+    <Error Condition="'$(InstallerPlatform)' != 'x64' And '$(InstallerPlatform)' != 'arm64'" Text="InstallerPlatform must be x64 or arm64." />
+    <Error Condition="'$(PublishDir)' == ''" Text="PublishDir must point to a verified application publish." />
+  </Target>
+  <Target Name="HarvestApplication" BeforeTargets="BeforeBuild" DependsOnTargets="ValidatePackageInputs">
+    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\harvest.ps1&quot; -PublishDir &quot;$(PublishDir)&quot; -Platform &quot;$(InstallerPlatform)&quot; -OutputFile &quot;$(MSBuildProjectDirectory)\$(IntermediateOutputPath)ApplicationFiles.wxs&quot;" />
+    <ItemGroup><Compile Include="$(IntermediateOutputPath)ApplicationFiles.wxs" /></ItemGroup>
+  </Target>
+</Project>

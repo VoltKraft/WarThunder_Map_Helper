@@ -1,0 +1,20 @@
+name: Feature request
+description: Propose an improvement and describe the problem it solves.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior and alternatives
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: API evidence, if this needs additional game data
+      description: Link public documentation or provide a sanitized example. Do not assume hidden game data is available.

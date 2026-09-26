@@ -1,0 +1,111 @@
+name: WinGet
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Published stable release to prepare
+        required: true
+        type: string
+      submit:
+        description: Open a Microsoft community manifest PR when automation is enabled
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: winget
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: >-
+      github.repository == 'VoltKraft/WarThunder_Map_Helper' &&
+      (github.event_name == 'workflow_dispatch' || (!github.event.release.draft && !github.event.release.prerelease))
+    runs-on: windows-2025
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Validate the selected stable tag
+        id: release
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.release_tag }}
+        run: |
+          if ($env:RELEASE_TAG -cnotmatch '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') { throw 'Invalid stable release tag.' }
+          "tag=$env:RELEASE_TAG" >> $env:GITHUB_OUTPUT
+          "version=$($env:RELEASE_TAG.Substring(1))" >> $env:GITHUB_OUTPUT
+
+      - name: Download and inspect actual release MSIs
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: ./tools/prepare-winget-release.ps1 -ReleaseTag $env:RELEASE_TAG
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: winget-${{ steps.release.outputs.tag }}
+          path: artifacts/winget/manifests/
+          if-no-files-found: error
+
+  submit:
+    needs: prepare
+    if: >-
+      vars.WINGET_AUTOMATION_ENABLED == 'true' &&
+      (github.event_name == 'release' || inputs.submit)
+    runs-on: windows-2025
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: winget-${{ needs.prepare.outputs.tag }}
+          path: manifests
+
+      - name: Reuse an existing submission and reject stale releases
+        id: existing
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+          PACKAGE_VERSION: ${{ needs.prepare.outputs.version }}
+        with:
+          script: |
+            const tag = process.env.RELEASE_TAG;
+            const version = process.env.PACKAGE_VERSION;
+            const {data: latest} = await github.rest.repos.getLatestRelease(context.repo);
+            if (latest.tag_name !== tag) { core.setOutput('skip', 'true'); core.notice('A newer release superseded this submission.'); return; }
+            try {
+              await github.rest.repos.getContent({owner: 'microsoft', repo: 'winget-pkgs', path: `manifests/v/VoltKraft/WarThunderMapHelper/${version}`});
+              core.setOutput('skip', 'true'); core.notice('This package version is already published.'); return;
+            } catch (error) { if (error.status !== 404) throw error; }
+            const {data: result} = await github.rest.search.issuesAndPullRequests({q: `repo:microsoft/winget-pkgs is:pr in:title "VoltKraft.WarThunderMapHelper" "${version}"`, per_page: 100});
+            const exact = result.items.filter(item => item.title === `New version: VoltKraft.WarThunderMapHelper version ${version}`);
+            if (exact.some(item => item.state === 'closed')) throw new Error('A previous submission was closed. Resolve it manually before retrying.');
+            if (exact.length) { core.setOutput('skip', 'true'); core.notice(`Existing submission: ${exact[0].html_url}`); }
+
+      - name: Download the verified official manifest creator
+        if: steps.existing.outputs.skip != 'true'
+        shell: pwsh
+        run: |
+          Invoke-WebRequest 'https://github.com/microsoft/winget-create/releases/download/v1.12.13.0/wingetcreate.exe' -OutFile wingetcreate.exe
+          if ((Get-FileHash wingetcreate.exe -Algorithm SHA256).Hash -ine '24042bd37915805615e6cf969ac57c6439124c3fe85823327f5f3fb24bd9ffea') { throw 'WinGet manifest creator checksum mismatch.' }
+
+      - name: Validate and submit the multiarchitecture manifest
+        if: steps.existing.outputs.skip != 'true'
+        shell: pwsh
+        env:
+          WINGET_CREATE_GITHUB_TOKEN: ${{ secrets.WINGETCREATE_TOKEN }}
+          PACKAGE_VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          if (-not $env:WINGET_CREATE_GITHUB_TOKEN) { throw 'WINGETCREATE_TOKEN is required when WinGet automation is enabled.' }
+          ./wingetcreate.exe submit manifests --prtitle "New version: VoltKraft.WarThunderMapHelper version $env:PACKAGE_VERSION" --no-open
+          if ($LASTEXITCODE -ne 0) { throw 'WinGet validation or PR submission failed.' }

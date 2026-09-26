@@ -1,0 +1,38 @@
+name: Bug report
+description: Report a reproducible problem with the application or its packages.
+body:
+  - type: markdown
+    attributes:
+      value: "For vulnerabilities, follow SECURITY.md instead of posting details here."
+  - type: input
+    id: version
+    attributes:
+      label: Application version
+      placeholder: "0.2.0"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Operating system, architecture, and package
+      placeholder: "Windows 11 x64 MSI, or Fedora aarch64 Flatpak"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Include whether you used demo data, a test flight, or a live match.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Relevant logs or screenshots
+      description: Remove credentials, personal information, and unrelated content before sharing.

@@ -1,0 +1,120 @@
+[
+  {
+    "type": "aircraft",
+    "color": "#faC81E",
+    "color[]": [
+      250,
+      200,
+      30
+    ],
+    "blink": 0,
+    "icon": "Player",
+    "icon_bg": "none",
+    "x": 0.630695,
+    "y": 0.644328,
+    "dx": -0.671354,
+    "dy": 0.741137
+  },
+  {
+    "type": "aircraft",
+    "color": "#39D921",
+    "color[]": [
+      57,
+      217,
+      33
+    ],
+    "blink": 0,
+    "icon": "Fighter",
+    "icon_bg": "none",
+    "x": 0.57942,
+    "y": 0.708042,
+    "dx": 0.990473,
+    "dy": -0.137705
+  },
+  {
+    "type": "aircraft",
+    "color": "#134AFF",
+    "color[]": [
+      19,
+      74,
+      255
+    ],
+    "blink": 0,
+    "icon": "Assault",
+    "icon_bg": "none",
+    "x": 0.579467,
+    "y": 0.708114,
+    "dx": 0.990468,
+    "dy": -0.137743
+  },
+  {
+    "type": "ground_model",
+    "color": "#174DFF",
+    "color[]": [
+      23,
+      77,
+      255
+    ],
+    "blink": 0,
+    "icon": "Wheeled",
+    "icon_bg": "none",
+    "x": 0.492151,
+    "y": 0.572094
+  },
+  {
+    "type": "ground_model",
+    "color": "#174DFF",
+    "color[]": [
+      23,
+      77,
+      255
+    ],
+    "blink": 0,
+    "icon": "MissileCorvette",
+    "icon_bg": "none",
+    "x": 0.674719,
+    "y": 0.77907
+  },
+  {
+    "type": "ground_model",
+    "color": "#fa0C00",
+    "color[]": [
+      250,
+      12,
+      0
+    ],
+    "blink": 0,
+    "icon": "MissileLightCruiser",
+    "icon_bg": "none",
+    "x": 0.836649,
+    "y": 0.66867
+  },
+  {
+    "type": "ground_model",
+    "color": "#174DFF",
+    "color[]": [
+      23,
+      77,
+      255
+    ],
+    "blink": 0,
+    "icon": "AircraftCarrier",
+    "icon_bg": "none",
+    "x": 0.649755,
+    "y": 0.834715
+  },
+  {
+    "type": "ground_model",
+    "color": "#fa0C00",
+    "color[]": [
+      250,
+      12,
+      0
+    ],
+    "blink": 0,
+    "icon": "MediumTank",
+    "icon_bg": "MediumTankTarget",
+    "x": 0.631042,
+    "y": 0.62679
+  }
+]

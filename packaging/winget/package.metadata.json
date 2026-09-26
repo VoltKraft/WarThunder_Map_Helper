@@ -1,0 +1,21 @@
+{
+  "packageIdentifier": "VoltKraft.WarThunderMapHelper",
+  "packageName": "War Thunder Map Helper",
+  "packageLocale": "en-US",
+  "publisher": "VoltKraft",
+  "publisherUrl": "https://github.com/VoltKraft",
+  "publisherSupportUrl": "https://github.com/VoltKraft/WarThunder_Map_Helper/issues",
+  "packageUrl": "https://github.com/VoltKraft/WarThunder_Map_Helper",
+  "repository": "VoltKraft/WarThunder_Map_Helper",
+  "license": "AGPL-3.0-only",
+  "moniker": "war-thunder-map-helper",
+  "shortDescription": "An unofficial desktop companion for local War Thunder flight telemetry and map contacts.",
+  "tags": ["map", "telemetry", "flight"],
+  "installerLocale": "en-US",
+  "installerType": "wix",
+  "manifestVersion": "1.12.0",
+  "releaseAssetNameTemplates": {
+    "x64": "WarThunderMapHelper-{version}-win-x64.msi",
+    "arm64": "WarThunderMapHelper-{version}-win-arm64.msi"
+  }
+}

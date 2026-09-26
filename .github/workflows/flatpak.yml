@@ -1,0 +1,120 @@
+name: Native Flatpak builds
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: Full immutable source commit
+        type: string
+        required: true
+      version:
+        description: Version from the validated source commit
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    outputs:
+      commit: ${{ steps.source.outputs.commit }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+          path: source
+          persist-credentials: false
+
+      - name: Validate source identity and SDK
+        id: source
+        env:
+          SOURCE_COMMIT: ${{ inputs.ref }}
+          PACKAGE_VERSION: ${{ inputs.version }}
+        run: |
+          test "$(git -C source rev-parse HEAD)" = "$SOURCE_COMMIT"
+          test "$(python3 source/scripts/release_metadata.py --root source --format version)" = "$PACKAGE_VERSION"
+          echo "commit=$SOURCE_COMMIT" >> "$GITHUB_OUTPUT"
+          sdk=$(python3 source/tools/read-flatpak-sdk.py --manifest source/packaging/flatpak/flathub/io.github.voltkraft.WarThunder_Map_Helper.yml --format version)
+          echo "sdk=$sdk" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: ${{ steps.source.outputs.sdk }}
+
+      - name: Regenerate and check both offline NuGet feeds
+        run: |
+          python3 source/tools/generate-flatpak-nuget-sources.py --source-root source --runtime linux-x64 --output nuget-x64.json
+          python3 source/tools/generate-flatpak-nuget-sources.py --source-root source --runtime linux-arm64 --output nuget-arm64.json
+
+      - name: Prepare the immutable candidate
+        env:
+          SOURCE_COMMIT: ${{ steps.source.outputs.commit }}
+        run: |
+          python3 source/tools/prepare-flatpak-validation.py --source-root source --commit "$SOURCE_COMMIT" --nuget-x64 nuget-x64.json --nuget-arm64 nuget-arm64.json --output-dir flatpak-candidate
+          cmp source/packaging/flatpak/flathub/nuget-sources.json flatpak-candidate/nuget-sources.json
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: flatpak-build-inputs
+          path: flatpak-candidate/
+          if-no-files-found: error
+          retention-days: 14
+
+  build:
+    name: Build Flatpak (${{ matrix.arch }})
+    needs: prepare
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            arch: x86_64
+            rid: x64
+          - runner: ubuntu-24.04-arm
+            arch: aarch64
+            rid: arm64
+    container:
+      # Build tooling only. Builder installs the manifest's 26.08 runtime/SDK.
+      image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-25.08
+      options: --privileged
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: flatpak-build-inputs
+          path: flatpak-candidate
+
+      - name: Build the application offline and export a stable bundle
+        uses: flatpak/flatpak-github-actions/flatpak-builder@79327416609af08178ad73b352877e51450790b3 # v6.8, MIT
+        with:
+          manifest-path: flatpak-candidate/io.github.voltkraft.WarThunder_Map_Helper.yml
+          bundle: WarThunderMapHelper-${{ inputs.version }}-linux-${{ matrix.rid }}.flatpak
+          arch: ${{ matrix.arch }}
+          branch: stable
+          repo-dir: repo
+          upload-artifact: false
+          cache: false
+          repository-name: flathub
+          repository-url: https://flathub.org/repo/flathub.flatpakrepo
+
+      - name: Inspect the exported application
+        env:
+          FLATPAK_ARCH: ${{ matrix.arch }}
+        run: |
+          flatpak build-export --help > /dev/null
+          ostree --repo=repo ls "app/io.github.voltkraft.WarThunder_Map_Helper/$FLATPAK_ARCH/stable" /files/share/licenses/io.github.voltkraft.WarThunder_Map_Helper/LICENSE
+          ostree --repo=repo ls "app/io.github.voltkraft.WarThunder_Map_Helper/$FLATPAK_ARCH/stable" /files/share/licenses/io.github.voltkraft.WarThunder_Map_Helper/nuget/index.json
+          if ostree --repo=repo ls "app/io.github.voltkraft.WarThunder_Map_Helper/$FLATPAK_ARCH/stable" /files/lib/war-thunder-map-helper/dotnet-sdk; then
+            echo "The build-only SDK must not be exported." >&2
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: map-helper-flatpak-${{ matrix.arch }}
+          path: WarThunderMapHelper-${{ inputs.version }}-linux-${{ matrix.rid }}.flatpak
+          if-no-files-found: error
+          retention-days: 14

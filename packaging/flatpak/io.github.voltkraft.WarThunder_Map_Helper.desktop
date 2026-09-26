@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=War Thunder Map Helper
+Comment=View local flight telemetry and map contacts
+Exec=war-thunder-map-helper
+Icon=io.github.voltkraft.WarThunder_Map_Helper
+Terminal=false
+Categories=Utility;
+Keywords=map;flight;telemetry;
+StartupWMClass=WarThunderMapHelper

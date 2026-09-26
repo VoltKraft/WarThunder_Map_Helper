@@ -1,0 +1,26 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <Version>0.2.0</Version>
+    <AssemblyVersion>$(Version).0</AssemblyVersion>
+    <FileVersion>$(Version).0</FileVersion>
+    <Authors>VoltKraft and contributors</Authors>
+    <Description>An unofficial tactical map companion for War Thunder.</Description>
+    <RepositoryUrl>https://github.com/VoltKraft/WarThunder_Map_Helper</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/VoltKraft/WarThunder_Map_Helper</PackageProjectUrl>
+    <PackageLicenseExpression>AGPL-3.0-only</PackageLicenseExpression>
+    <Copyright>Copyright (c) 2026 VoltKraft and contributors</Copyright>
+    <Deterministic>true</Deterministic>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <AvaloniaTelemetryEnabled>false</AvaloniaTelemetryEnabled>
+    <CreateHardLinksForCopyFilesToOutputDirectoryIfPossible>false</CreateHardLinksForCopyFilesToOutputDirectoryIfPossible>
+    <CreateSymbolicLinksForCopyFilesToOutputDirectoryIfPossible>false</CreateSymbolicLinksForCopyFilesToOutputDirectoryIfPossible>
+  </PropertyGroup>
+</Project>

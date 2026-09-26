@@ -1,0 +1,84 @@
+name: Flathub preparation
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Published stable release to inspect
+        required: true
+        type: string
+      submit:
+        description: Reserved; submission is unavailable under the current Flathub policy
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: flathub-preparation
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: github.repository == 'VoltKraft/WarThunder_Map_Helper'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          path: automation
+          persist-credentials: false
+
+      - name: Read the published stable release
+        id: release
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        with:
+          script: |
+            const tag = process.env.RELEASE_TAG;
+            if (!/^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(tag)) throw new Error('A stable release tag is required.');
+            const {data: release} = await github.rest.repos.getReleaseByTag({...context.repo, tag});
+            if (release.draft || release.prerelease || !release.published_at || release.tag_name !== tag) throw new Error('The release must be published and stable.');
+            require('node:fs').writeFileSync('release.json', JSON.stringify(release));
+            core.setOutput('tag', tag);
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ steps.release.outputs.tag }}
+          fetch-depth: 0
+          path: source
+          persist-credentials: false
+
+      - name: Resolve the source SDK and commit
+        id: source
+        run: |
+          echo "commit=$(git -C source rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          sdk=$(python3 automation/tools/read-flatpak-sdk.py --manifest source/packaging/flatpak/flathub/io.github.voltkraft.WarThunder_Map_Helper.yml --format version)
+          echo "sdk=$sdk" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: ${{ steps.source.outputs.sdk }}
+
+      - name: Prepare reproducible release inputs
+        env:
+          SOURCE_COMMIT: ${{ steps.source.outputs.commit }}
+        run: |
+          python3 automation/tools/generate-flatpak-nuget-sources.py --source-root source --runtime linux-x64 --output nuget-x64.json
+          python3 automation/tools/generate-flatpak-nuget-sources.py --source-root source --runtime linux-arm64 --output nuget-arm64.json
+          python3 automation/tools/prepare-flathub-release.py --source-root source --release-json release.json --commit "$SOURCE_COMMIT" --nuget-x64 nuget-x64.json --nuget-arm64 nuget-arm64.json --output-dir flatpak-release-inputs
+          cmp source/packaging/flatpak/flathub/nuget-sources.json flatpak-release-inputs/nuget-sources.json
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: flatpak-release-inputs-${{ steps.release.outputs.tag }}
+          path: flatpak-release-inputs/
+          if-no-files-found: error
+
+      - name: Report the Flathub submission boundary
+        run: |
+          echo "Prepared technical build inputs only. These AI-assisted manifests cannot be submitted to Flathub." >> "$GITHUB_STEP_SUMMARY"
+          echo "A maintainer must independently author compliant packaging and perform initial submission. See docs/DISTRIBUTION.md." >> "$GITHUB_STEP_SUMMARY"
+          echo "Policy: https://docs.flathub.org/docs/for-app-authors/requirements#generative-ai-policy" >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,54 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <?if $(var.InstallerArchitecture) = arm64 ?>
+    <?define UpgradeCode = "A16566EF-1A42-4CC5-9A69-9E356C479E74" ?>
+    <?define MenuGuid = "9C32E0B4-AC1B-4C8B-B1DD-A6E16E37141C" ?>
+    <?define DesktopGuid = "F4EBA356-6140-46DA-89D5-9A3384655E32" ?>
+    <?define InstallName = "WarThunderMapHelper-arm64" ?>
+    <?define DisplayName = "War Thunder Map Helper (ARM64)" ?>
+    <?define RegistryRoot = "Software\WarThunderMapHelper\arm64" ?>
+  <?else?>
+    <!-- Preserve the upgrade and component identities of the original x64 installer. -->
+    <?define UpgradeCode = "5A824E1E-2A50-432A-BF1E-7D3D13879662" ?>
+    <?define MenuGuid = "C04DA2F7-1458-42B6-B6AE-33E314494CCE" ?>
+    <?define DesktopGuid = "AEC89522-4083-44A5-9058-AFB2B9CE3A57" ?>
+    <?define InstallName = "WarThunderMapHelper" ?>
+    <?define DisplayName = "War Thunder Map Helper" ?>
+    <?define RegistryRoot = "Software\WarThunderMapHelper" ?>
+  <?endif?>
+  <Package Name="$(var.DisplayName)" Manufacturer="VoltKraft" Version="$(var.ProductVersion)"
+           UpgradeCode="$(var.UpgradeCode)" Scope="perUser" Language="1033" InstallerVersion="500">
+    <!-- The original x64 package used German; upgrades must also find that package. -->
+    <MajorUpgrade DowngradeErrorMessage="A newer version of War Thunder Map Helper is already installed." IgnoreLanguage="yes" Schedule="afterInstallInitialize" />
+    <MediaTemplate EmbedCab="yes" />
+    <Icon Id="ProgramIcon.ico" SourceFile="$(var.PublishDir)\Assets\branding\app.ico" />
+    <Property Id="ARPPRODUCTICON" Value="ProgramIcon.ico" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/VoltKraft/WarThunder_Map_Helper" />
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="ProgramsFolder" Name="Programs">
+        <Directory Id="INSTALLFOLDER" Name="$(var.InstallName)" />
+      </Directory>
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="AppMenuFolder" Name="$(var.DisplayName)">
+        <Component Id="MenuShortcut" Guid="$(var.MenuGuid)">
+          <Shortcut Id="StartShortcut" Name="$(var.DisplayName)" Target="[INSTALLFOLDER]WarThunderMapHelper.exe" WorkingDirectory="INSTALLFOLDER" Icon="ProgramIcon.ico" IconIndex="0" />
+          <RemoveFolder Id="RemoveMenuFolder" On="uninstall" />
+          <RemoveFolder Id="RemoveEmptyProgramsFolder" Directory="ProgramsFolder" On="uninstall" />
+          <RegistryValue Root="HKCU" Key="$(var.RegistryRoot)" Name="Installed" Value="1" Type="integer" KeyPath="yes" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+    <StandardDirectory Id="DesktopFolder">
+      <Component Id="DesktopShortcutComponent" Guid="$(var.DesktopGuid)">
+        <Shortcut Id="DesktopShortcut" Name="$(var.DisplayName)" Target="[INSTALLFOLDER]WarThunderMapHelper.exe"
+                  WorkingDirectory="INSTALLFOLDER" Icon="ProgramIcon.ico" IconIndex="0" />
+        <RegistryValue Root="HKCU" Key="$(var.RegistryRoot)" Name="DesktopShortcut" Value="1" Type="integer" KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+    <Feature Id="Complete" Title="$(var.DisplayName)" Level="1">
+      <ComponentGroupRef Id="ApplicationFiles" />
+      <ComponentRef Id="MenuShortcut" />
+      <ComponentRef Id="DesktopShortcutComponent" />
+    </Feature>
+  </Package>
+</Wix>

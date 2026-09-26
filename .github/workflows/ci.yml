@@ -1,0 +1,165 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+  DOTNET_NOLOGO: '1'
+  NUGET_PACKAGES: ${{ github.workspace }}/.build-cache/nuget-packages
+
+jobs:
+  metadata:
+    name: Release metadata and tooling
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Validate release metadata
+        id: version
+        run: python3 scripts/release_metadata.py --github-output "$GITHUB_OUTPUT"
+      - name: Test release tooling
+        run: python3 -m unittest discover -s scripts/tests -p 'test_*.py' -v
+      - name: Test distribution tooling
+        run: python3 -m unittest discover -s tools/tests -p 'test_*.py' -v
+
+  desktop:
+    name: Desktop (${{ matrix.runtime }})
+    needs: metadata
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-2025
+            runtime: win-x64
+          - runner: windows-11-arm
+            runtime: win-arm64
+          - runner: ubuntu-24.04
+            runtime: linux-x64
+          - runner: ubuntu-24.04-arm
+            runtime: linux-arm64
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('global.json', 'NuGet.Config', 'Directory.Build.props', '**/*.csproj', '**/*.wixproj', '**/packages.lock.json') }}
+          restore-keys: nuget-${{ runner.os }}-${{ runner.arch }}-
+      - name: Install Linux display dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends xvfb xauth libx11-6 libice6 libsm6 \
+            libfontconfig1 libxrandr2 libxi6 libxcursor1 libgbm1 libgl1 libegl1 libinput10
+      - name: Restore
+        run: dotnet restore WarThunderMapHelper.slnx
+      - name: Check dependency license compatibility
+        run: python scripts/check_dependency_licenses.py
+      - name: Check Windows installer component identities
+        if: runner.os == 'Windows'
+        run: python scripts/tests/test_windows_packaging.py
+      - name: Build
+        run: dotnet build WarThunderMapHelper.slnx -c Release --no-restore
+      - name: Test
+        run: dotnet test WarThunderMapHelper.slnx -c Release --no-build --logger trx --results-directory artifacts/tests
+      - name: Verify formatting
+        if: matrix.runtime == 'linux-x64'
+        run: dotnet format whitespace WarThunderMapHelper.slnx --verify-no-changes --no-restore
+      - name: Build and verify Windows packages
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          TARGET_RUNTIME: ${{ matrix.runtime }}
+        run: ./packaging/windows/build.ps1 -Runtime $env:TARGET_RUNTIME -SkipTests
+      - name: Smoke-test extracted Windows portable archive
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          VERSION: ${{ needs.metadata.outputs.version }}
+          TARGET_RUNTIME: ${{ matrix.runtime }}
+        run: |
+          Expand-Archive -LiteralPath "artifacts/release/WarThunderMapHelper-$env:VERSION-$env:TARGET_RUNTIME-portable.zip" -DestinationPath artifacts/smoke-package
+          $app = (Resolve-Path artifacts/smoke-package/WarThunderMapHelper.exe).Path
+          New-Item -ItemType Directory -Path artifacts/screenshots -Force | Out-Null
+          $screenshot = Join-Path $PWD 'artifacts/screenshots/windows.png'
+          $profile = Join-Path $PWD 'artifacts/smoke-data'
+          $process = Start-Process -FilePath $app -ArgumentList '--demo','--smoke-test',"--screenshot=$screenshot","--data-dir=$profile" -PassThru -WindowStyle Hidden
+          if (-not $process.WaitForExit(120000)) { $process.Kill(); throw 'Windows smoke test timed out.' }
+          if ($process.ExitCode -ne 0 -or !(Test-Path -LiteralPath $screenshot)) { throw 'Windows smoke test failed.' }
+      - name: Build and verify Linux archive
+        if: runner.os == 'Linux'
+        env:
+          TARGET_RUNTIME: ${{ matrix.runtime }}
+        run: bash packaging/linux/build.sh --runtime "$TARGET_RUNTIME" --skip-tests
+      - name: Smoke-test extracted Linux archive
+        if: runner.os == 'Linux'
+        env:
+          VERSION: ${{ needs.metadata.outputs.version }}
+          TARGET_RUNTIME: ${{ matrix.runtime }}
+        run: xvfb-run -a bash scripts/verify-linux-package.sh "$VERSION" "$TARGET_RUNTIME"
+      - name: Upload verified packages
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: map-helper-native-${{ matrix.runtime }}
+          path: |
+            artifacts/release/WarThunderMapHelper-*.msi
+            artifacts/release/WarThunderMapHelper-*-portable.zip
+            artifacts/release/WarThunderMapHelper-*.tar.gz
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+      - name: Upload validation reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: diagnostics-${{ matrix.runtime }}
+          path: |
+            artifacts/tests/
+            artifacts/screenshots/
+            artifacts/*verification*.json
+          retention-days: 14
+
+  flatpak:
+    name: Flatpak
+    needs: metadata
+    uses: ./.github/workflows/flatpak.yml
+    with:
+      ref: ${{ github.sha }}
+      version: ${{ needs.metadata.outputs.version }}
+
+  ci:
+    name: CI passed
+    if: always()
+    needs: [metadata, desktop, flatpak]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require every validation job
+        env:
+          RESULTS: ${{ join(needs.*.result, ',') }}
+        run: |
+          if [[ "$RESULTS" != 'success,success,success' ]]; then
+            echo "CI did not pass every required job: $RESULTS" >&2
+            exit 1
+          fi
