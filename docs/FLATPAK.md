@@ -30,6 +30,11 @@ Flatpak build downloads the listed inputs first and restores exclusively from
 those local packages inside the build sandbox. NuGet's online vulnerability audit
 is disabled only for this offline publish; normal CI restore keeps auditing on.
 The dependency license gate also runs inside the Flatpak build.
+The manifest sets `NUGET_PACKAGES` to
+`/run/build/map-helper/.build-cache/nuget-packages`, inside the persistent module
+directory. Each build command starts a separate sandbox, so the default home
+cache would disappear before the license gate reads the restored package graph.
+This build-only cache is excluded from local source copies and the exported app.
 
 ## Build and install locally
 

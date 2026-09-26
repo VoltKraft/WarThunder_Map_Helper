@@ -35,6 +35,13 @@ Both specifications were checked on their official websites for this update.
 - Application and packaging builds share a pinned .NET SDK and project
   version. Shell files have defined line endings for Windows and Linux.
 
+### Fixed
+
+- Preserve supplemental license-file checksums when Git checks out the source
+  on Windows, allowing MSI and portable packaging to complete.
+- Retain the extracted NuGet packages between Flatpak build commands so the
+  dependency license check can inspect the complete restored graph.
+
 ## [0.1.5] - 2026-09-24
 
 This entry summarizes the locally validated baseline before public release

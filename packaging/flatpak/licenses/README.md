@@ -1,5 +1,9 @@
 # Supplemental license texts
 
+Git preserves LF line endings for these checksum-pinned texts on every platform.
+Keep the matching `.gitattributes` rules when adding upstream notices; Windows
+checkout conversion must not alter the bytes recorded in `sources.json`.
+
 `catalog.json` maps exact NuGet package versions to original upstream license
 and notice files. `sources.json` records immutable source URLs and SHA-256 hashes
 for those files. These supplements cover packages whose archives omit the full

@@ -16,6 +16,8 @@
 *.wixproj text eol=lf
 *.desktop text eol=lf
 *.svg text eol=lf
+# Preserve the bytes checked against upstream license hashes on every platform.
+packaging/flatpak/licenses/*.txt text eol=lf
 *.png binary
 *.ico binary
 *.zip binary
