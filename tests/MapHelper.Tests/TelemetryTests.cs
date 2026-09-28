@@ -10,6 +10,24 @@ namespace MapHelper.Tests;
 public class TelemetryTests
 {
     [Theory]
+    [InlineData(true, "tank")]
+    [InlineData(false, null)]
+    public void TankArmyRequiresValidIndicatorsEvenWhenStateIsUnavailable(bool valid, string? expected)
+    {
+        using var state = JsonDocument.Parse("""{"valid":false}""");
+        using var indicators = JsonDocument.Parse("{\"valid\":" + (valid ? "true" : "false")
+            + ",\"army\":\"tank\",\"type\":\"tankModels/ussr_t_34_1941_l_11\"}");
+        var player = new TelemetryParser().ParsePlayer(state.RootElement, indicators.RootElement);
+        Assert.Equal(expected, player.Army);
+        Assert.Equal(valid, player.Valid);
+        Assert.Equal("tank", player.Raw!["indicators.army"].GetString());
+        var engine = new MapEngine();
+        engine.Accept(new(Endpoint.MapInfo, 0, 1, Map: TrackingTests.Map));
+        engine.Accept(new(Endpoint.State, .1, 1, Player: player));
+        Assert.Equal(expected, engine.Scene(.2).Player?.Army);
+    }
+
+    [Theory]
     [InlineData("#f00C00", Affiliation.Enemy)]
     [InlineData("#F00C00", Affiliation.Enemy)]
     [InlineData("#fa0C00", Affiliation.Enemy)]

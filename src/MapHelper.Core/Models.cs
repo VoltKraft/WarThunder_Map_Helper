@@ -58,9 +58,11 @@ public sealed record WeaponTelemetry(IReadOnlyDictionary<string, double> Ammunit
 {
     public static WeaponTelemetry Empty { get; } = new(new Dictionary<string, double>(), new Dictionary<string, JsonElement>());
 }
+/// <summary>Player values from optional state and indicator endpoints; absent values remain unknown.</summary>
+/// <remarks>Army preserves the valid indicators' army string, or null when unavailable. It identifies vehicle context, not mission rules.</remarks>
 public sealed record PlayerTelemetry(bool Valid, string? Vehicle, double? FuelKg, double? TrueAirspeedKmh,
     double? AltitudeM, double? VerifiedConsumptionKgS, WeaponTelemetry Weapons,
-    IReadOnlyDictionary<string, JsonElement>? Raw = null);
+    IReadOnlyDictionary<string, JsonElement>? Raw = null, string? Army = null);
 public sealed record CombatEvent(string Id, string Text, string? TargetId = null, bool ConfirmedDestruction = false);
 
 /// <summary>A received endpoint update associated with one map epoch.</summary>

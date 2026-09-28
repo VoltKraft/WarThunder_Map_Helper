@@ -19,6 +19,7 @@ public sealed class MapEngine
     private RangeEstimate? _range;
     private double _lastObjects = double.NegativeInfinity;
     private double _lastState = double.NegativeInfinity;
+    private double _lastPlayer = double.NegativeInfinity;
     private bool _connected;
     private bool _hadSelf;
     private bool _missionRunning = true;
@@ -35,7 +36,7 @@ public sealed class MapEngine
             _navigationSession++;
             _tracker.Reset(); _rangeEstimator.Reset(); _lastPacket.Clear();
             _range = null; _player = null; _hadSelf = false; _map = null;
-            _lastObjects = _lastState = double.NegativeInfinity;
+            _lastObjects = _lastState = _lastPlayer = double.NegativeInfinity;
             _connected = false; _missionRunning = true;
             MapImage = null; ImageVersion++;
             _eventIds.Clear(); _events.Clear();
@@ -72,6 +73,7 @@ public sealed class MapEngine
                 if (_player?.Vehicle != null && packet.Player.Vehicle != null && _player.Vehicle != packet.Player.Vehicle)
                 { _rangeEstimator.Reset(); _range = null; _tracker.Disconnect(); _navigationSession++; }
                 _player = packet.Player;
+                _lastPlayer = packet.Time;
                 if (!_player.Valid) { _range = null; _rangeEstimator.Reset(); break; }
                 if (packet.Endpoint == Endpoint.State)
                 {
@@ -108,6 +110,6 @@ public sealed class MapEngine
             ? contacts.Any(c => c.Observation.Affiliation == Affiliation.Self) ? "Connected live" : "Map connected · own player unavailable"
             : _map == null ? "Waiting for War Thunder" : "Disconnected · data is stale";
         return new(_map, contacts, live && now - _lastState < 1 ? _range : null,
-            now - _lastState < 2 ? _player : null, status, live, now, _events.ToArray(), _navigationSession);
+            now - _lastPlayer < 2 ? _player : null, status, live, now, _events.ToArray(), _navigationSession);
     }
 }

@@ -32,6 +32,12 @@
     </screenshot>
   </screenshots>
   <releases>
+    <release version="0.2.4" date="2026-09-28">
+      <description><p>Exclude all aircraft from automatic tank camera framing
+      while preserving their map markers, hide spawn markers while retaining
+      tank spawn camera anchors, recognize green squad tanks, and retain valid
+      indicators when the state endpoint fails.</p></description>
+    </release>
     <release version="0.2.1" date="2026-09-26">
       <description><p>Updated graphics dependencies and Windows MSI and Linux
       Flatpak installers for both supported architectures.</p></description>

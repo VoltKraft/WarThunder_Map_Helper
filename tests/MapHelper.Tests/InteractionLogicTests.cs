@@ -14,6 +14,92 @@ public sealed class InteractionLogicTests
     private static Contact Own => Unit(1, 1000, Affiliation.Self, true);
     private static MapScene Scene(params Contact[] units) => new(Map, units, null, null, "Live", true, 1, []);
 
+    private static MapScene TankScene(params Contact[] units) => Scene(units) with
+    {
+        Player = new(true, "tankModels/test", null, null, null, null, WeaponTelemetry.Empty, Army: "tank")
+    };
+
+    [Fact]
+    public void FreshTankIndicatorsEnableFramingWhenStateEndpointFailsAndExpireWithoutUpdates()
+    {
+        var own = Unit(1, 1000, Affiliation.Self, type: "ground_model");
+        var engine = new MapEngine();
+        engine.Accept(new(Endpoint.MapInfo, 0, 1, Map: Map));
+        engine.Accept(new(Endpoint.Objects, .1, 1, Objects: [own.Observation, Unit(2, 25000).Observation]));
+        engine.Accept(new(Endpoint.Indicators, .1, 1, Player: TankScene().Player));
+        engine.Accept(new(Endpoint.State, .2, 1, Success: false));
+        var planner = new CameraFocusPlanner();
+        Assert.Single(planner.Update(engine.Scene(.2), new()).Points);
+        engine.Accept(new(Endpoint.Objects, 3, 1, Objects: [own.Observation, Unit(2, 25000).Observation]));
+        Assert.Null(engine.Scene(3).Player);
+        Assert.Equal(2, planner.Update(engine.Scene(3), new()).Points.Count);
+    }
+
+    [Fact]
+    public void TankCameraRetainsGroundObjectivesButExcludesAllAviation()
+    {
+        var own = Unit(1, 1000, Affiliation.Self, type: "ground_model");
+        var field = Unit(6, -15000, type: "airfield");
+        field = field with { Observation = field.Observation with { EndPosition = new(2.5, .5) } };
+        var scene = TankScene(own, Unit(2, 5000, type: "ground_model"), Unit(3, 6000, type: "capture_zone"),
+            Unit(4, 7000), Unit(5, 25000), field, Unit(7, -10000, type: "respawn_base_fighter"),
+            Unit(8, 6000, type: "respawn_base_tank"));
+        var result = new CameraFocusPlanner().Update(scene, new());
+        Assert.Equal(new[] { own.Position, new Vec2(5000, 2000), new Vec2(6000, 2000), new Vec2(6000, 2000) }, result.Points);
+        Assert.Equal(8, scene.Contacts.Count);
+        Assert.Equal(3, new CameraFocusPlanner().Update(scene, new(false, false)).Points.Count);
+    }
+
+    [Theory]
+    [InlineData("aircraft", Affiliation.Enemy)]
+    [InlineData("air_model", Affiliation.Enemy)]
+    [InlineData("aircraft", Affiliation.Ally)]
+    [InlineData("air_model", Affiliation.Squad)]
+    public void AircraftOverGroundMapNeverChangeTankZoomOrBecomeFallbackAnchors(string type, Affiliation team)
+    {
+        var own = Unit(1, 1000, Affiliation.Self, type: "ground_model");
+        var plane = Unit(2, 9000, team, type: type);
+        var scene = TankScene(own, plane);
+        var planner = new CameraFocusPlanner();
+        var focus = planner.Update(scene, new());
+        Assert.Equal(new[] { own.Position }, focus.Points);
+        Assert.Contains(plane, MapDisplay.ApplyMarkerVisibility(scene).Contacts);
+        Assert.Null(planner.Update(TankScene(own), new(false, false)).Fallback);
+        Assert.Equal(2, planner.Update(Scene(Own, plane), new()).Points.Count);
+    }
+
+    [Fact]
+    public void TankFocusRequiresLiveMatchingOwnMarkerAndValidTankIndicators()
+    {
+        var own = Unit(1, 1000, Affiliation.Self, type: "ground_model");
+        var scene = TankScene(own, Unit(2, 25000));
+        foreach (var alternative in new[]
+        {
+            scene with { Player = null }, scene with { Player = scene.Player! with { Valid = false } },
+            scene with { Player = scene.Player! with { Army = "ship" } }, scene with { Live = false },
+            scene with { Contacts = [Own, Unit(2, 25000)] }
+        }) Assert.Equal(2, new CameraFocusPlanner().Update(alternative, new()).Points.Count);
+        Assert.Single(new CameraFocusPlanner().Update(scene with { Contacts = [Unit(2, 25000)] }, new()).Points);
+        var outsideSelf = Unit(1, -2000, Affiliation.Self, type: "ground_model");
+        Assert.Contains(outsideSelf.Position, new CameraFocusPlanner().Update(TankScene(outsideSelf), new()).Points);
+    }
+
+    [Fact]
+    public void DistantAircraftAndVehicleTransitionsCannotRestoreExcludedFallback()
+    {
+        var own = Unit(1, 1000, Affiliation.Self, type: "ground_model");
+        var planner = new CameraFocusPlanner();
+        planner.Update(TankScene(own, Unit(2, 25000)), new(false, false));
+        Assert.Null(planner.Update(TankScene(own), new(false, false)).Fallback);
+        planner.Update(TankScene(own, Unit(2, 5000)), new(false, false));
+        planner.Update(TankScene(own, Unit(2, 25000)), new(false, false));
+        Assert.Null(planner.Update(TankScene(own), new(false, false)).Fallback);
+        planner.Update(Scene(Own, Unit(2, 25000)), new(false, false));
+        Assert.Null(planner.Update(TankScene(own), new(false, false)).Fallback);
+        planner.Update(TankScene(own, Unit(3, 5000, type: "ground_model")), new(false, false));
+        Assert.NotNull(planner.Update(TankScene(own), new(false, false)).Fallback);
+    }
+
     [Fact]
     public void ZoomDefaultsIncludeAiAndBasesAndFiltersNeverHideSelfOrUnknownIdentity()
     {
@@ -120,6 +206,8 @@ public sealed class InteractionLogicTests
     [InlineData("#00FF00")]
     [InlineData("#00C800")]
     [InlineData("#00fa00")]
+    [InlineData("#67D756")]
+    [InlineData("#67d756")]
     public void GreenSquadPalettesStaySeparateFromBlueAllies(string color)
     {
         var parser = new TelemetryParser(); Assert.Equal(Affiliation.Squad, parser.Classify("Fighter", color));

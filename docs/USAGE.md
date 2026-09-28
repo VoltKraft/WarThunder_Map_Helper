@@ -58,7 +58,24 @@ older profiles. Explicitly saved choices are preserved.
 | **Include bases / mission objects** | Include bases and mission objects in automatic framing. |
 
 The two camera filters affect automatic framing, not whether a contact can be
-drawn. With both filters off, after the relevant enemies disappear and their
+drawn. When valid `/indicators` data reports `army: "tank"` and the live own
+marker is a ground vehicle, automatic framing excludes airfields, fighter/bomber
+spawns, and all aircraft, including aircraft over the ground map and squad
+aircraft. Aircraft markers remain visible but do not affect the **All units**
+zoom or last-enemy camera anchor. Ground contacts and capture zones remain
+eligible under the filters. Tank spawn positions always anchor the ground
+camera, including when allied units or
+bases/mission objects are excluded. Flying, missing tank indicators, or an
+unavailable own marker restores normal framing; manual navigation is unaffected.
+This detects the current vehicle context, not the mission's game mode.
+
+On a battlefield with tank spawn points, or while a tank player is confirmed,
+all spawn markers are hidden, including their hover cards and target readouts.
+Their original API data remains available to camera planning. Capture zones
+remain visible. Tank spawn evidence keeps markers hidden during respawn and
+when switching to an aircraft within the same ground battlefield.
+
+With both filters off, after the relevant enemies disappear and their
 brief predictions expire, framing includes the last actual position of the
 last observed enemy. It is labeled **Last enemy position**. This is a camera
 reference, not a continuing contact. A map/session change or disconnection
@@ -285,7 +302,8 @@ Position association is therefore an estimate; ambiguous crossings do not
 produce an assumed reliable velocity.
 
 Known green map colors are interpreted as squad contacts, including
-`#39D921`, observed in a historical battle sample. Additional squad, ally,
+`#39D921`, observed in a historical battle sample, and `#67D756`, observed for
+squad tanks on 2026-09-28. Additional squad, ally,
 and enemy colors can be configured under **Connection**. Comparison against
 the actual squad roster remains an open validation item.
 

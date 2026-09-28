@@ -27,6 +27,49 @@ public sealed class MapDisplayTests
         contacts, null, null, "Live", true, 1, []);
     private static Contact Self => Unit(1, Affiliation.Self, new(1000, 1000), new(1, 0));
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void TankSpawnsRemainCameraAnchorsWithoutMarkersOrTargetReadouts(bool showAllies)
+    {
+        Contact Object(long id, string type, Affiliation team, double x)
+        {
+            var contact = Unit(id, team, new(x, 5000));
+            return contact with { Observation = contact.Observation with { Type = type } };
+        }
+        var own = Object(1, "ground_model", Affiliation.Self, 5000);
+        var allySpawn = Object(2, "respawn_base_tank", Affiliation.Ally, 1000);
+        var enemySpawn = Object(3, "respawn_base_tank", Affiliation.Enemy, 9000);
+        var airSpawn = Object(4, "respawn_base_fighter", Affiliation.Enemy, 25000);
+        var capture = Object(5, "capture_zone", Affiliation.Enemy, 6000);
+        var source = Scene(own, allySpawn, enemySpawn, airSpawn, capture) with
+        { Player = new(true, "tankModels/test", null, null, null, null, WeaponTelemetry.Empty, Army: "tank") };
+        var filtered = MapDisplay.ApplyVisibility(source, new(showAllies));
+        var focus = new CameraFocusPlanner().Update(filtered, new(false, false));
+        Assert.Equal(new[] { own.Position, allySpawn.Position, enemySpawn.Position }, focus.Points);
+        var displayed = MapDisplay.ApplyMarkerVisibility(filtered);
+        Assert.Equal(new long[] { 1, 5 }, displayed.Contacts.Select(c => c.TrackId));
+        Assert.DoesNotContain(TargetNavigation.Calculate(displayed, new()), r => r.TrackId is 2 or 3 or 4);
+        Assert.Equal(5, source.Contacts.Count);
+        Assert.DoesNotContain(MapDisplay.ApplyMarkerVisibility(filtered with { Player = null, Live = false }).Contacts,
+            c => c.Observation.Type.StartsWith("respawn_base_", StringComparison.Ordinal));
+        Assert.Contains(airSpawn, MapDisplay.ApplyMarkerVisibility(Scene(Self, airSpawn)).Contacts);
+    }
+
+    [Fact]
+    public void ObservedTankSquadGreenSurvivesTheHideAlliesFilterAndHonorsOverrides()
+    {
+        var parser = new TelemetryParser();
+        var observation = Assert.Single(parser.ParseObjects("""[{"type":"ground_model","icon":"HeavyTank","color":"#67D756","x":0.4,"y":0.5}]"""));
+        Assert.Equal(Affiliation.Squad, observation.Affiliation);
+        Assert.Equal("#67D756", observation.Color);
+        var squad = Unit(2, observation.Affiliation, new(4000, 5000)) with { Observation = observation };
+        Assert.Contains(squad, MapDisplay.ApplyVisibility(Scene(Self, squad), new(false)).Contacts);
+        parser.ColorOverrides["#67D756"] = Affiliation.Ally;
+        Assert.Equal(Affiliation.Ally, parser.Classify("HeavyTank", "#67D756"));
+        Assert.Equal(Affiliation.Self, parser.Classify("Player", "#67D756"));
+    }
+
     [Fact]
     public void HidingAlliesKeepsSelfSquadAndEnemiesAndRemovesThemFromCamera()
     {

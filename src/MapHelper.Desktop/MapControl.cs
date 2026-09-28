@@ -39,7 +39,7 @@ public sealed class MapControl(IconRepository icons) : Control
     private static IBrush Brush(string color) => new SolidColorBrush(Color.Parse(color));
     public void SetScene(MapScene scene, Bitmap? image)
     {
-        _scene = scene; _image = image;
+        _scene = MapDisplay.ApplyMarkerVisibility(scene); _image = image;
         if (scene.Map?.Key != _mapKey || scene.SessionId != _session)
         {
             _mapKey = scene.Map?.Key; _session = scene.SessionId;

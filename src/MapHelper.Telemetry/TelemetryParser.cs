@@ -66,7 +66,7 @@ public sealed class TelemetryParser
         // Known browser-map palettes, including squad green. Unknown colors remain unknown.
         return color.ToUpperInvariant() switch
         {
-            "#00FF00" or "#00C800" or "#00FA00" or "#39D921" => Affiliation.Squad,
+            "#00FF00" or "#00C800" or "#00FA00" or "#39D921" or "#67D756" => Affiliation.Squad,
             "#185AFF" or "#174DFF" or "#134AFF" or "#043FFF" or "#1E90FF" or "#00BFFF" or "#3C78FF" => Affiliation.Ally,
             "#FA3200" or "#FA0C00" or "#F00C00" or "#FF0000" or "#FF3300" => Affiliation.Enemy,
             _ => Affiliation.Unknown
@@ -105,7 +105,7 @@ public sealed class TelemetryParser
         return new(sv || iv, iv ? Text(i, "type") : null, sv ? Number(s, "Mfuel, kg") : null,
             sv ? Number(s, "TAS, km/h") : null, sv ? Number(s, "H, m") : null,
             null, // Bare fuel_consume has vehicle-dependent semantics; use mass decrease until its unit is validated.
-            new(ammo, weaponRaw), raw);
+            new(ammo, weaponRaw), raw, iv ? Text(i, "army") : null);
     }
     public static (IReadOnlyList<CombatEvent> Events, long LastEvent, long LastDamage) ParseEvents(string json)
     {

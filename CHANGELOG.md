@@ -8,6 +8,20 @@ Both specifications were checked on their official websites for this update.
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-09-28
+
+### Fixed
+
+- Exclude every aircraft from automatic tank camera framing, including nearby
+  and squad aircraft, as well as aviation bases, while keeping aircraft markers
+  visible. Use valid tank indicators and a live own ground marker for detection.
+- Hide spawn markers and their hover/readout targets on ground battlefields,
+  while retaining tank spawn positions as automatic camera anchors even when
+  allied units or mission objects are excluded.
+- Recognize the observed `#67D756` squad palette so squad tanks use green symbols
+  and remain visible when ordinary allies are hidden.
+- Keep valid player indicators available when the optional state endpoint fails.
+
 ## [0.2.1] - 2026-09-26
 
 ### Changed
@@ -83,6 +97,7 @@ automation; it does not claim an earlier GitHub release or tag exists.
 - Logic, integration, and Avalonia interaction tests, with recorded API
   fixtures and documented live-game validation limits.
 
-[Unreleased]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.2.4...HEAD
+[0.2.4]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.2.1...v0.2.4
 [0.2.1]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/VoltKraft/WarThunder_Map_Helper/releases/tag/v0.2.0

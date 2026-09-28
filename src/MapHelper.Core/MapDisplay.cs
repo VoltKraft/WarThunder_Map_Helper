@@ -6,9 +6,30 @@ public sealed record NavigationFocus(long TrackId, Vec2 Position, bool Estimated
 
 public static class MapDisplay
 {
-    // Squad contacts have their own affiliation and remain visible when ordinary allies are hidden.
+    /// <summary>True only for valid tank indicators and a live own ground marker.</summary>
+    public static bool IsGroundVehicleContext(MapScene scene) => scene.Live
+        && scene.Player is { Valid: true, Army: "tank" }
+        && scene.Contacts.Any(c => c.Observation.Affiliation == Affiliation.Self && c.Phase == ContactPhase.Live
+            && c.Observation.Type is "ground_model" or "tank");
+
+    // Retain invisible tank spawn anchors independently of the allied-unit display filter.
     public static MapScene ApplyVisibility(MapScene scene, MapDisplayOptions options) => options.ShowAllies ? scene
-        : scene with { Contacts = scene.Contacts.Where(c => c.Observation.Affiliation != Affiliation.Ally).ToArray() };
+        : scene with
+        {
+            Contacts = scene.Contacts.Where(c => c.Observation.Affiliation != Affiliation.Ally
+            || c.Observation.Type == "respawn_base_tank").ToArray()
+        };
+
+    /// <summary>Returns drawable contacts without changing the source scene used for camera planning.</summary>
+    /// <remarks>Tank spawns identify the ground battlefield even while the own vehicle is unavailable.</remarks>
+    public static MapScene ApplyMarkerVisibility(MapScene scene) => IsGroundVehicleContext(scene)
+        || scene.Contacts.Any(c => c.Observation.Type == "respawn_base_tank")
+        ? scene with
+        {
+            Contacts = scene.Contacts.Where(c => c.Observation.Affiliation == Affiliation.Self
+            || !c.Observation.Type.StartsWith("respawn_base_", StringComparison.Ordinal)).ToArray()
+        }
+        : scene;
 
     public static NavigationFocus? FocusTarget(MapScene scene)
     {

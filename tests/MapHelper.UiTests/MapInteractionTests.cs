@@ -107,6 +107,35 @@ public sealed class MapInteractionTests
     }
 
     [AvaloniaFact]
+    public void HiddenTankSpawnCannotBeHoveredButStillSetsAutomaticZoom()
+    {
+        using var icons = new IconRepository(new());
+        var map = new MapControl(icons) { Camera = new(false, false) };
+        var window = Open(map);
+        try
+        {
+            var source = Scene();
+            var own = source.Contacts[0] with
+            {
+                Position = new(2000, 5000),
+                Observation = source.Contacts[0].Observation with { Type = "ground_model", Position = new(.2, .5) }
+            };
+            var spawn = new Contact(2, new("spawn", "respawn_base_tank", "respawn_base_tank", Affiliation.Ally,
+                "#174DFF", new(.8, .5)), new(8000, 5000), null, null, 1, 0, ContactPhase.Live, null, false);
+            var scene = source with
+            {
+                Contacts = [own, spawn],
+                Player = new(true, "tankModels/test", null, null, null, null, WeaponTelemetry.Empty, Army: "tank")
+            };
+            map.SetScene(scene, null); Dispatcher.UIThread.RunJobs();
+            long? hovered = null; map.HoverContactChanged += (id, _) => hovered = id;
+            window.MouseMove(new(48, map.Bounds.Height / 2)); Assert.Equal(1L, hovered);
+            window.MouseMove(new(map.Bounds.Width - 48, map.Bounds.Height / 2)); Assert.Null(hovered);
+        }
+        finally { window.Close(); }
+    }
+
+    [AvaloniaFact]
     public void OpenSymbolDropdownContainsAnImageForEveryEntry()
     {
         var settings = new AppSettings(); using var icons = new IconRepository(settings);

@@ -5,6 +5,48 @@ observations. Commands are described in [Development](DEVELOPMENT.md) and
 [Distribution](DISTRIBUTION.md). Local checks do not establish successful
 GitHub Actions execution or publication to a package repository.
 
+## Ground framing: live API observation on 2026-09-28
+
+Versions 0.2.2 and 0.2.3 below were local Windows installation iterations, not
+published GitHub releases. Their changes are included in the 0.2.4 release.
+
+- Version 0.2.4 excludes all aircraft from automatic tank framing, including
+  nearby allies and squad aircraft, without hiding their markers. All 210
+  application tests passed (144 logic/integration and 66 UI). The Windows x64
+  MSI passed extraction and startup checks; installation returned code 0 and
+  all 305 installed files matched the publish output.
+- The installed 0.2.4 application started successfully, but no live match data
+  was available for visual verification of its final all-aircraft exclusion.
+  The 0.2.3 live observations below cover the earlier ground view and squad colors.
+- The user reported incorrect squad colors. A fresh read-only API sample
+  returned two `HeavyTank` contacts with `#67D756`, alongside blue allies, 32 tank
+  spawn objects and two fighter spawns. This color is now a known squad palette;
+  the API does not independently provide a squad roster in this sample.
+- Version 0.2.3 hides spawn markers while retaining tank spawn camera anchors,
+  even with allied units and mission objects excluded from framing.
+- All 206 application tests passed for 0.2.3 (140 logic/integration and 66 UI),
+  including spawn-anchor framing, hidden-spawn hover behavior, and squad colors.
+  The Windows x64 MSI passed payload and startup verification; installation
+  returned code 0 and all 305 installed files matched the publish output.
+- The user identified the running match as a tank battle. Read-only requests to
+  `127.0.0.1:8111` independently returned valid indicators with `army: "tank"`,
+  vehicle `tankModels/ussr_t_34_1941_l_11`, a `ground_model` own marker, tank
+  respawn points, capture zones, and mission status `running`.
+- `/state` returned `valid: false`; this does not invalidate valid indicators.
+  `/map_info.json` supplied a 4,096 m square map. Aircraft and airfield endpoints
+  included normalized coordinates outside 0..1, explaining excessive framing.
+- The camera change uses current vehicle evidence; it does not establish a
+  universal ground-battle identifier or interpret undocumented `hud_type` values.
+  A live screenshot from the installed 0.2.3 application showed green squad
+  tanks and no spawn markers, with the ground map framed around the battlefield.
+  Evidence: `artifacts/screenshots/installed-0.2.3-live.png`. This Windows x64
+  observation does not establish native ARM64 or Linux gameplay validation.
+- The initial 0.2.2 Release solution build passed with zero warnings or errors. All 200
+  application tests passed (135 logic/integration and 65 UI tests), including
+  tank framing, aircraft transitions, last-enemy anchors, invalid indicators,
+  and indicators-only operation when `/state` fails. Whitespace verification
+  and the final diff check passed.
+
 ## Version 0.2.1: local checks on 2026-09-26
 
 - All 194 application tests passed with Avalonia 12.1.3 and SkiaSharp 4.152.1:
