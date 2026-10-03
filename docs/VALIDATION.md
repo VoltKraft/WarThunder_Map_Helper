@@ -7,6 +7,16 @@ GitHub Actions execution or publication to a package repository.
 
 ## Compass: automated and synthetic checks on 2026-10-03
 
+- Post-push CI for `0e62092` passed all four native desktop jobs but failed
+  Flatpak preparation because AppStream still named 0.2.4. Its screenshot URL
+  also retained v0.2.1, which had already blocked the 0.2.4 candidate.
+  Release publication was therefore skipped; the local installation described below
+  did not establish a published 0.3.0 release.
+- The correction synchronizes AppStream with 0.3.0 and adds an early metadata
+  regression gate. The release scripts passed 42 tests (2 platform skips), and
+  distribution tooling passed 91 tests (3 platform skips) on Windows.
+  Regenerated Linux x64/ARM64 feeds merged to the exact committed 30-entry feed.
+
 - Release solution build passed with no warnings or errors; all 246 tests passed
   (177 logic/integration and 69 UI). Existing dependencies restored with the
   configured NuGet vulnerability audit enabled.

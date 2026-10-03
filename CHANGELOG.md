@@ -16,6 +16,13 @@ Both specifications were checked on their official websites for this update.
   4–72 evenly spaced lines in steps of four, and optional intermediate bearings.
 - Start-to-end compass bearings and direction markers for right-drag measurements.
 
+### Fixed
+
+- Synchronize Flatpak AppStream release metadata and screenshot references with
+  version 0.3.0 so package validation can proceed.
+- Reject mismatched AppStream metadata during the initial release metadata check,
+  before platform builds start.
+
 ## [0.2.4] - 2026-09-28
 
 ### Fixed

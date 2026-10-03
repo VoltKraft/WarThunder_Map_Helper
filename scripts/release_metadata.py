@@ -1,4 +1,4 @@
-"""Read and validate the single release version and its Keep a Changelog entry.
+"""Validate release identity across project, changelog and AppStream metadata.
 
 Stable releases use major.minor.patch within Windows Installer's numeric limits.
 This module performs no network access and does not modify project metadata.
@@ -55,9 +55,47 @@ def release_notes(changelog: str, version: str) -> str:
     return notes + "\n"
 
 
+def validate_appstream(root: Path, version: str, release_date: str) -> None:
+    """Require matching release metadata and local, versioned screenshot sources.
+
+    No remote tag is required: Flatpak preparation later pins these URLs to the
+    tested source commit. Paths follow the same restricted PNG convention.
+    """
+    appstream = ET.parse(root / "packaging/flatpak/io.github.voltkraft.WarThunder_Map_Helper.metainfo.xml")
+    releases = appstream.findall("./releases/release")
+    if not releases or releases[0].get("version") != version:
+        raise ValueError(f"Latest AppStream release must match project version {version}.")
+    if sum(item.get("version") == version for item in releases) != 1:
+        raise ValueError(f"AppStream must contain exactly one release for {version}.")
+    if releases[0].get("date") != release_date:
+        raise ValueError(f"AppStream release date must match changelog date {release_date}.")
+    images = appstream.findall("./screenshots/screenshot/image")
+    if not images:
+        raise ValueError("AppStream must contain at least one screenshot image.")
+    prefix = f"https://raw.githubusercontent.com/VoltKraft/WarThunder_Map_Helper/v{version}/"
+    screenshot_root = (root / "packaging/flatpak/screenshots").resolve()
+    if not screenshot_root.is_relative_to(root.resolve()):
+        raise ValueError("AppStream screenshots directory must stay inside the source checkout.")
+    for image in images:
+        url = image.text or ""
+        if not url.startswith(prefix):
+            raise ValueError("AppStream screenshots must use the matching repository release URL.")
+        relative = url[len(prefix):]
+        if not re.fullmatch(r"packaging/flatpak/screenshots/[A-Za-z0-9][A-Za-z0-9._-]*\.png", relative):
+            raise ValueError("AppStream screenshot must be a simple repository PNG path.")
+        local_image = (root / relative).resolve()
+        if not local_image.is_relative_to(screenshot_root) or not local_image.is_file():
+            raise ValueError("AppStream screenshot file is missing or outside its source directory.")
+
+
 def metadata(root: Path = ROOT) -> dict[str, str]:
     version = read_version(root)
-    return {"version": version, "tag": f"v{version}", "notes": release_notes((root / "CHANGELOG.md").read_text(encoding="utf-8-sig"), version)}
+    changelog = (root / "CHANGELOG.md").read_text(encoding="utf-8-sig")
+    notes = release_notes(changelog, version)
+    # release_notes has already checked this heading's uniqueness and ISO date.
+    heading = re.search(rf"^## \[{re.escape(version)}\] - ([0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}})", changelog, re.MULTILINE)
+    validate_appstream(root, version, heading.group(1))
+    return {"version": version, "tag": f"v{version}", "notes": notes}
 
 
 def main() -> None:
