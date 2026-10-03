@@ -28,10 +28,14 @@
   <screenshots>
     <screenshot type="default">
       <caption>Map and telemetry using sample data</caption>
-      <image>https://raw.githubusercontent.com/VoltKraft/WarThunder_Map_Helper/v0.2.1/packaging/flatpak/screenshots/map.png</image>
+      <image>https://raw.githubusercontent.com/VoltKraft/WarThunder_Map_Helper/v0.3.0/packaging/flatpak/screenshots/map.png</image>
     </screenshot>
   </screenshots>
   <releases>
+    <release version="0.3.0" date="2026-10-03">
+      <description><p>Add a configurable player compass with cardinal and optional
+      degree labels, and directional bearings for distance measurements.</p></description>
+    </release>
     <release version="0.2.4" date="2026-09-28">
       <description><p>Exclude all aircraft from automatic tank camera framing
       while preserving their map markers, hide spawn markers while retaining

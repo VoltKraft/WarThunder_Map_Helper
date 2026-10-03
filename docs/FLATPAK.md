@@ -8,6 +8,12 @@ checksums. Neither the SDK nor a host .NET installation is needed at runtime.
 
 ## Regenerate the offline feed
 
+For each version change, update `Directory.Build.props`, `CHANGELOG.md`, and the
+latest release entry and screenshot tag URL in
+`packaging/flatpak/io.github.voltkraft.WarThunder_Map_Helper.metainfo.xml` together.
+Run `python3 scripts/release_metadata.py` before packaging; the initial CI metadata
+job also rejects inconsistent AppStream versions, dates, or screenshot references.
+
 Use Python 3.11+ and the SDK pinned in `global.json`. Run from the repository root:
 
 ```bash
