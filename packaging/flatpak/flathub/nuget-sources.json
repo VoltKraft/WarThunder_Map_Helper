@@ -169,24 +169,24 @@
     },
     {
         "dest": "nuget-sources",
-        "dest-filename": "skiasharp.4.152.1.nupkg",
-        "sha512": "5913b769ae1299a0fc3d69131ca927a38a9571047bfe5822ba5812a032f3992e0dcefb315075c7faf709af86e26c896f2442423826baa5160c3c549b9d146534",
+        "dest-filename": "skiasharp.4.153.1.nupkg",
+        "sha512": "aaecdaa3157f83ee408b397039fe97cdd00b8b7720084cbaad0034e925b57decc0f8bae3d05285986e6feb98720ccdbaa83f9274beeed078d669d37d84e67014",
         "type": "file",
-        "url": "https://api.nuget.org/v3-flatcontainer/skiasharp/4.152.1/skiasharp.4.152.1.nupkg"
+        "url": "https://api.nuget.org/v3-flatcontainer/skiasharp/4.153.1/skiasharp.4.153.1.nupkg"
     },
     {
         "dest": "nuget-sources",
-        "dest-filename": "skiasharp.nativeassets.linux.4.152.1.nupkg",
-        "sha512": "5cf81899a0aa454cc71a9bed7a0a5eea6e9e43ea210164ee351908ccb597ce45e4dd808f132e37c4f34a84ba2513700427c75e835d5fb3d882663c386c10759f",
+        "dest-filename": "skiasharp.nativeassets.linux.4.153.1.nupkg",
+        "sha512": "9d93432988fda9571a9bce7b9dea8c577d834824834911f7865714b5946eb5ad3ab791ede16015c1a9a746c25cab29c078a645a5b3fab642fb7ac83c7dbf6177",
         "type": "file",
-        "url": "https://api.nuget.org/v3-flatcontainer/skiasharp.nativeassets.linux/4.152.1/skiasharp.nativeassets.linux.4.152.1.nupkg"
+        "url": "https://api.nuget.org/v3-flatcontainer/skiasharp.nativeassets.linux/4.153.1/skiasharp.nativeassets.linux.4.153.1.nupkg"
     },
     {
         "dest": "nuget-sources",
-        "dest-filename": "skiasharp.nativeassets.macos.4.152.1.nupkg",
-        "sha512": "c6e0af03f4ae4420b8c763bf3fd3d3c9b3c613b9e550b3d8ddeaf327f17b0179666ef5d9418dd1a587eb5114194c0751ea3e7d86890adba1aed7915b272a396f",
+        "dest-filename": "skiasharp.nativeassets.macos.4.153.1.nupkg",
+        "sha512": "c5e5c304559a4549218790ecbf3ae79b799b6364fc6137b9157b30e923276ec64196bf749f36311489d0296155fd98be1fffe0eeb21769f8a73e5bc783f40fb1",
         "type": "file",
-        "url": "https://api.nuget.org/v3-flatcontainer/skiasharp.nativeassets.macos/4.152.1/skiasharp.nativeassets.macos.4.152.1.nupkg"
+        "url": "https://api.nuget.org/v3-flatcontainer/skiasharp.nativeassets.macos/4.153.1/skiasharp.nativeassets.macos.4.153.1.nupkg"
     },
     {
         "dest": "nuget-sources",
@@ -197,10 +197,10 @@
     },
     {
         "dest": "nuget-sources",
-        "dest-filename": "skiasharp.nativeassets.win32.4.152.1.nupkg",
-        "sha512": "ed1e7f586d026af78671d615bcb6767a4031f8089469d125ab09a6bfaaa4dfe54300e818da26ba318f467841e0914f5d4734c0eeb31dc40b6470e736acc43f47",
+        "dest-filename": "skiasharp.nativeassets.win32.4.153.1.nupkg",
+        "sha512": "fbe3bac52456654ec0e9e5cd432227eb43dcbfc5d5795a30a0faae5dd1be0b5b93e177134ed89e3d9327911d691ebc804b938aae42d16a2b6c582da2162fa1e0",
         "type": "file",
-        "url": "https://api.nuget.org/v3-flatcontainer/skiasharp.nativeassets.win32/4.152.1/skiasharp.nativeassets.win32.4.152.1.nupkg"
+        "url": "https://api.nuget.org/v3-flatcontainer/skiasharp.nativeassets.win32/4.153.1/skiasharp.nativeassets.win32.4.153.1.nupkg"
     },
     {
         "dest": "nuget-sources",

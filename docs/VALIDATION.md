@@ -5,6 +5,22 @@ observations. Commands are described in [Development](DEVELOPMENT.md) and
 [Distribution](DISTRIBUTION.md). Local checks do not establish successful
 GitHub Actions execution or publication to a package repository.
 
+## SkiaSharp update candidate on 2026-10-03
+
+- Dependabot PR #4 updates SkiaSharp and Linux native assets from 4.152.1 to
+  4.153.1. Its generated offline feed must also update SkiaSharp's macOS and
+  Win32 native dependencies before Flatpak validation can pass.
+- Official NuGet archives declare MIT for all four packages. Their supplied
+  license and native third-party notice texts are unchanged from 4.152.1;
+  the existing notice collector retains them. No license-policy exception or
+  supplemental notice change is required. Sources:
+  [SkiaSharp](https://www.nuget.org/packages/SkiaSharp/4.153.1) and
+  [Linux assets](https://www.nuget.org/packages/SkiaSharp.NativeAssets.Linux/4.153.1).
+- This is an update candidate; successful validation does not itself merge the
+  pull request or publish a new application version.
+- All 246 application tests and the declared-license gate passed locally. Both
+  regenerated Linux feeds contain 28 packages and merge into 30 source entries.
+
 ## Compass: automated and synthetic checks on 2026-10-03
 
 - Post-push CI for `0e62092` passed all four native desktop jobs but failed
