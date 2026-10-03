@@ -25,7 +25,7 @@ identifiers, and game-provided HUD messages retain their original content.
 | --- | --- |
 | Mouse wheel | Zoom around the pointer. |
 | Left-button drag | Pan the map. |
-| Right-button drag | Draw a straight distance measurement with a live meter/kilometer label. |
+| Right-button drag | Draw a straight measurement with live distance and start-to-end compass bearing. |
 | Release the right button | Keep the measurement anchored to its map positions while panning and zooming. |
 | Right click | Clear the measurement. A new right-button drag replaces it. |
 | Hover over a unit | Open its information card, even when its target label is disabled. |
@@ -46,14 +46,18 @@ approach. Manual panning or zooming ends automatic framing.
 
 ## Map options
 
-All five map options default to enabled for new profiles and missing fields in
-older profiles. Explicitly saved choices are preserved.
+Display and camera toggles default to enabled, including the compass. The compass
+starts with four lines and intermediate degree labels disabled. Missing fields in
+older profiles use these defaults; explicitly saved choices are preserved.
 
 | Option | Effect |
 | --- | --- |
 | **Show allies (excluding squad)** | Show ordinary allies. Your unit and squad remain visible when this is off; hidden allies do not influence automatic framing. |
 | **Squad member course lines** | Draw each squad member's movement direction to the map edge. |
 | **Marked / nearest target course line** | Prefer one uniquely API-marked enemy; otherwise use the enemy nearest your course line. |
+| **Show compass** | Draw thin north-oriented rays from your current player marker to the visible map viewport edge, with N/E/S/W labels. |
+| **Compass lines** | Choose 4–72 evenly spaced rays, in steps of four; the four cardinal directions are always included. |
+| **Show degrees on additional lines** | Label intermediate rays with their compass bearings; cardinal labels stay visible independently. |
 | **Include AI units** | Include positively identified AI units in automatic framing. Unknown AI/player identities remain included. |
 | **Include bases / mission objects** | Include bases and mission objects in automatic framing. |
 
@@ -84,6 +88,18 @@ clears it.
 The thin yellow line is your ground course. Moving icons have a direction tip.
 Squad and target course lines are independent of distance/time labels.
 No line is invented when a direction is unknown.
+
+Compass bearings increase clockwise: north is 0°, east 90°, south 180°, and
+west 270°. They refer to map north, not your vehicle's heading. The compass
+requires a current, live own marker inside the viewport; it is hidden for
+missing, stale, destroyed, or off-screen players. Pan back or use **Follow player**
+to restore it. Demo uses its explicitly synthetic player marker.
+
+Measurement bearings use the same convention and run from the drag's start
+to its end; reversing the drag reverses the bearing by 180°. Measurements
+retain their world positions and bearings when the camera moves. A zero-length
+measurement has no bearing. Measurement bearings remain visible when the compass
+or its intermediate degree labels are disabled.
 
 ## Contacts and target labels
 
@@ -252,6 +268,9 @@ The settings schema is unchanged by the English conversion:
 | `TargetDisplay.Air`, `Ground`, `Bases`, `Sea` | Target-value flags; default `"None"`. |
 | `Camera.IncludeAi`, `Camera.IncludeBases` | Boolean, both `true` by default. |
 | `Display.ShowAllies`, `Display.SquadVectors`, `Display.TargetVector` | Boolean, all `true` by default. |
+| `Display.ShowCompass` | Boolean; default `true`. |
+| `Display.CompassLineCount` | Integer; default `4`. Clamped to 4–72, then rounded down to a multiple of four when loaded. |
+| `Display.ShowCompassDegrees` | Boolean; default `false`. Only affects intermediate compass rays. |
 
 Saving settings writes a temporary file, replaces `settings.json`, and then
 updates `icons/mapping.json`. Write failures are shown in the relevant UI.

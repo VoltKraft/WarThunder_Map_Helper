@@ -6,6 +6,7 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.LogicalTree;
 using Avalonia.Themes.Fluent;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
@@ -61,13 +62,47 @@ public sealed class MapInteractionTests
             var live = Assert.IsType<MeasuredSegment>(map.Measurement);
             var scale = Math.Min((map.Bounds.Width - 52) / 10000, (map.Bounds.Height - 72) / 10000);
             Assert.Equal(200 / scale, live.Meters, 5);
+            Assert.Equal(90, live.BearingDegrees);
             window.MouseUp(new(550, 250), MouseButton.Right);
             var finished = Assert.IsType<MeasuredSegment>(map.Measurement);
             Assert.Equal(300 / scale, finished.Meters, 5);
+            Assert.Equal(90, finished.BearingDegrees);
             window.MouseWheel(new(400, 300), new(0, 2));
             Assert.Equal(finished, map.Measurement);
             window.MouseDown(new(100, 100), MouseButton.Right); window.MouseUp(new(100, 100), MouseButton.Right);
             Assert.Null(map.Measurement);
+        }
+        finally { window.Close(); }
+    }
+
+    [AvaloniaFact]
+    public void CompassTracksPlayerAndHidesForUnavailableOrOffscreenOrigins()
+    {
+        using var icons = new IconRepository(new());
+        var map = new MapControl(icons); var window = Open(map);
+        try
+        {
+            var scene = Scene();
+            map.SetScene(scene, null); map.AutoFrame = false; map.Fit();
+            Assert.Equal(new[] { "N", "E", "S", "W" }, map.CompassRays.Select(r => r.Cardinal));
+            map.Display = map.Display with { CompassLineCount = 12, ShowCompassDegrees = true };
+            Assert.Equal(12, map.CompassRays.Count);
+            var shifted = scene.Contacts[0] with { Position = new(6000, 4000) };
+            var originalNorth = map.CompassRays[0].End;
+            map.SetScene(scene with { Contacts = [shifted] }, null);
+            Assert.True(map.CompassRays[0].End.X > originalNorth.X);
+            Assert.Equal(0, map.CompassRays[0].End.Y);
+            map.Display = map.Display with { ShowCompass = false }; Assert.Empty(map.CompassRays);
+            map.Display = map.Display with { ShowCompass = true };
+            foreach (var phase in new[] { ContactPhase.Predicted, ContactPhase.Stale, ContactPhase.Destroyed })
+            {
+                map.SetScene(scene with { Contacts = [shifted with { Phase = phase }] }, null);
+                Assert.Empty(map.CompassRays);
+            }
+            map.SetScene(scene with { Live = false }, null); Assert.Empty(map.CompassRays);
+            map.SetScene(scene with { Contacts = [] }, null); Assert.Empty(map.CompassRays);
+            map.SetScene(scene with { Contacts = [shifted with { Position = new(1000000, 1000000) }] }, null);
+            Assert.Empty(map.CompassRays);
         }
         finally { window.Close(); }
     }
@@ -160,8 +195,55 @@ public sealed class MapInteractionTests
         var settings = AppSettings.Load(); Assert.True(settings.Display.ShowAllies);
         Assert.True(settings.Display.SquadVectors); Assert.True(settings.Display.TargetVector);
         Assert.True(settings.Camera.IncludeAi); Assert.True(settings.Camera.IncludeBases);
-        settings.Display = new(false, false, false); settings.Camera = new(false, false); settings.Save();
+        Assert.True(settings.Display.ShowCompass); Assert.Equal(4, settings.Display.CompassLineCount);
+        Assert.False(settings.Display.ShowCompassDegrees);
+        settings.Display = new(false, false, false, false, 12, true); settings.Camera = new(false, false); settings.Save();
         var loaded = AppSettings.Load(); Assert.Equal(settings.Display, loaded.Display); Assert.Equal(settings.Camera, loaded.Camera);
+    }
+
+    [AvaloniaFact]
+    public void OldDisplayFieldsAndInvalidCompassCountsKeepSafeCompassDefaults()
+    {
+        var path = Path.Combine(AppPaths.Root, "settings.json");
+        File.WriteAllText(path, """{"Display":{"ShowAllies":false}}""");
+        var settings = AppSettings.Load();
+        Assert.False(settings.Display.ShowAllies); Assert.True(settings.Display.ShowCompass);
+        Assert.Equal(4, settings.Display.CompassLineCount); Assert.False(settings.Display.ShowCompassDegrees);
+        foreach (var (saved, expected) in new[] { (-4, 4), (0, 4), (7, 4), (13, 12), (int.MaxValue, 72) })
+        {
+            File.WriteAllText(path, $$$"""{"Display":{"CompassLineCount":{{{saved}}},"ShowCompass":false,"ShowCompassDegrees":true}}""");
+            settings = AppSettings.Load();
+            Assert.Equal(expected, settings.Display.CompassLineCount);
+            Assert.False(settings.Display.ShowCompass); Assert.True(settings.Display.ShowCompassDegrees);
+        }
+    }
+
+    [AvaloniaFact]
+    public void CompassOptionsApplyImmediatelyAndPersistIndependently()
+    {
+        new AppSettings().Save();
+        var window = new MainWindow();
+        try
+        {
+            var button = window.GetLogicalDescendants().OfType<Button>().Single(b => b.Name == "MapOptions");
+            var content = Assert.IsType<ScrollViewer>(Assert.IsType<Flyout>(button.Flyout).Content);
+            var controls = content.GetLogicalDescendants().OfType<Control>().ToArray();
+            var enabled = controls.OfType<CheckBox>().Single(c => c.Name == "ShowCompass");
+            var degrees = controls.OfType<CheckBox>().Single(c => c.Name == "ShowCompassDegrees");
+            var count = controls.OfType<ComboBox>().Single(c => c.Name == "CompassLineCount");
+            var map = window.GetLogicalDescendants().OfType<MapControl>().Single();
+            Assert.True(enabled.IsChecked); Assert.False(degrees.IsEnabled);
+            Assert.Equal(Enumerable.Range(1, 18).Select(n => n * 4), count.ItemsSource!.Cast<int>());
+            count.SelectedItem = 12; degrees.IsChecked = true;
+            Assert.True(degrees.IsEnabled); Assert.Equal(12, map.Display.CompassLineCount);
+            Assert.True(map.Display.ShowCompassDegrees);
+            enabled.IsChecked = false;
+            Assert.False(count.IsEnabled); Assert.False(degrees.IsEnabled); Assert.False(map.Display.ShowCompass);
+            Assert.Equal(map.Display, AppSettings.Load().Display);
+            enabled.IsChecked = true;
+            Assert.True(count.IsEnabled); Assert.True(degrees.IsEnabled); Assert.True(degrees.IsChecked);
+        }
+        finally { window.Close(); }
     }
 
     [AvaloniaFact]

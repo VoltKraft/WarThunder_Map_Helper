@@ -5,6 +5,37 @@ observations. Commands are described in [Development](DEVELOPMENT.md) and
 [Distribution](DISTRIBUTION.md). Local checks do not establish successful
 GitHub Actions execution or publication to a package repository.
 
+## Compass: automated and synthetic checks on 2026-10-03
+
+- Release solution build passed with no warnings or errors; all 246 tests passed
+  (177 logic/integration and 69 UI). Existing dependencies restored with the
+  configured NuGet vulnerability audit enabled.
+- Tests cover clockwise bearings, reverse measurements, all supported ray counts,
+  viewport intersections, invalid/offscreen origins, player availability, settings
+  compatibility, and immediate UI persistence.
+- Windows demo captures verified default cardinal rays, 12 rays with degree
+  labels and a directional measurement, 72 rays, and the scrollable options panel.
+  Dense degree labels can overlap near a viewport edge; cardinal labels are drawn
+  last. Evidence is local under `artifacts/compass-*.png` (not committed).
+- These are synthetic and automated checks, not live-match, Linux, or ARM64
+  visual validation.
+
+### Local Windows installation of 0.3.0
+
+- On 2026-10-03, the Windows x64 MSI was built from the local compass working
+  tree and installed per-user over 0.2.4. This was a local installation, not a
+  published GitHub release. All 246 tests passed again during packaging.
+- Dependency licenses, MSI architecture, upgrade identity, shortcuts, embedded
+  icon, and version passed the packaging checks. Administrative extraction
+  matched all 305 publish files and the extracted application passed startup.
+- Installation returned code 0. The installed executable reports 0.3.0; all
+  305 installed payload files matched the publish output. The installed app
+  passed a separate demo startup and measurement screenshot check using an
+  isolated profile, without altering the normal user settings.
+- Local evidence: `artifacts/install-0.3.0.log`,
+  `artifacts/msi-smoke-verification-win-x64.json`, and
+  `artifacts/screenshots/installed-0.3.0.png`.
+
 ## Ground framing: live API observation on 2026-09-28
 
 Versions 0.2.2 and 0.2.3 below were local Windows installation iterations, not

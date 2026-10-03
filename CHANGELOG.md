@@ -8,6 +8,14 @@ Both specifications were checked on their official websites for this update.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-03
+
+### Added
+
+- Default-on player compass with thin rays to the viewport edge, cardinal labels,
+  4–72 evenly spaced lines in steps of four, and optional intermediate bearings.
+- Start-to-end compass bearings and direction markers for right-drag measurements.
+
 ## [0.2.4] - 2026-09-28
 
 ### Fixed
@@ -97,7 +105,8 @@ automation; it does not claim an earlier GitHub release or tag exists.
 - Logic, integration, and Avalonia interaction tests, with recorded API
   fixtures and documented live-game validation limits.
 
-[Unreleased]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.2.4...HEAD
+[Unreleased]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.2.4...v0.3.0
 [0.2.4]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.2.1...v0.2.4
 [0.2.1]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/VoltKraft/WarThunder_Map_Helper/releases/tag/v0.2.0

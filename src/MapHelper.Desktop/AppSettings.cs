@@ -49,6 +49,7 @@ public sealed class AppSettings
             settings.TargetDisplay ??= new();
             settings.Camera ??= new();
             settings.Display ??= new();
+            settings.Display = settings.Display with { CompassLineCount = Compass.NormalizeLineCount(settings.Display.CompassLineCount) };
             if (!TryAddress(settings.ApiAddress, out _)) settings.ApiAddress = "http://127.0.0.1:8111/";
             return settings;
         }

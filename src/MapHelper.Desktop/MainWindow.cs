@@ -190,6 +190,23 @@ public sealed class MainWindow : Window
         var showAllies = new CheckBox { Content = "Show allies (excluding squad)", IsChecked = _settings.Display.ShowAllies };
         var squadVectors = new CheckBox { Content = "Squad member course lines", IsChecked = _settings.Display.SquadVectors };
         var targetVector = new CheckBox { Content = "Marked / nearest target course line", IsChecked = _settings.Display.TargetVector };
+        var compass = new CheckBox { Name = "ShowCompass", Content = "Show compass", IsChecked = _settings.Display.ShowCompass };
+        var compassCount = new ComboBox
+        {
+            Name = "CompassLineCount",
+            ItemsSource = Enumerable.Range(1, 18).Select(n => n * 4).ToArray(),
+            SelectedItem = Compass.NormalizeLineCount(_settings.Display.CompassLineCount),
+            IsEnabled = _settings.Display.ShowCompass,
+            HorizontalAlignment = HorizontalAlignment.Stretch
+        };
+        Avalonia.Automation.AutomationProperties.SetName(compassCount, "Compass lines");
+        var compassDegrees = new CheckBox
+        {
+            Name = "ShowCompassDegrees",
+            Content = "Show degrees on additional lines",
+            IsChecked = _settings.Display.ShowCompassDegrees,
+            IsEnabled = _settings.Display.ShowCompass && _settings.Display.CompassLineCount > 4
+        };
         ToolTip.SetTip(targetVector, "Direction of the uniquely API-marked enemy, otherwise the enemy nearest your course line. An API marker does not always identify your selected target.");
         var filterMessage = Text("These filters affect only automatic framing. Contacts with unknown AI status remain included.", 12, "#8C9DB1");
         var filterError = Text("", 12, "#FF7E82");
@@ -197,30 +214,42 @@ public sealed class MainWindow : Window
         {
             _settings.Camera = new(includeAi.IsChecked == true, includeBases.IsChecked == true);
             _map.Camera = _settings.Camera;
-            _settings.Display = new(showAllies.IsChecked == true, squadVectors.IsChecked == true, targetVector.IsChecked == true);
+            var lineCount = compassCount.SelectedItem is int count ? count : 4;
+            compassCount.IsEnabled = compass.IsChecked == true;
+            compassDegrees.IsEnabled = compass.IsChecked == true && lineCount > 4;
+            _settings.Display = new(showAllies.IsChecked == true, squadVectors.IsChecked == true, targetVector.IsChecked == true,
+                compass.IsChecked == true, lineCount, compassDegrees.IsChecked == true);
             _map.Display = _settings.Display;
+            _map.InvalidateVisual();
             try { _settings.Save(); filterError.Text = ""; }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             { filterError.Text = "Saved for this session only: " + ex.Message; }
         }
         includeAi.IsCheckedChanged += (_, _) => SaveCamera(); includeBases.IsCheckedChanged += (_, _) => SaveCamera();
         showAllies.IsCheckedChanged += (_, _) => SaveCamera(); squadVectors.IsCheckedChanged += (_, _) => SaveCamera(); targetVector.IsCheckedChanged += (_, _) => SaveCamera();
+        compass.IsCheckedChanged += (_, _) => SaveCamera(); compassCount.SelectionChanged += (_, _) => SaveCamera();
+        compassDegrees.IsCheckedChanged += (_, _) => SaveCamera();
         var filters = new Button
         {
             Name = "MapOptions",
             Content = "Map options",
             Flyout = new Flyout
             {
-                Content = new StackPanel
+                Content = new ScrollViewer
                 {
-                    Width = 340,
-                    Spacing = 12,
-                    Children =
+                    MaxHeight = 560,
+                    Content = new StackPanel
+                    {
+                        Width = 340,
+                        Spacing = 12,
+                        Children =
             {
                 Text("Display", 15), showAllies, squadVectors, targetVector,
+                Text("Compass", 15), compass, Text("Compass lines (4–72, in steps of 4)", 12), compassCount, compassDegrees,
                 Text("Automatic framing", 15), includeAi, includeBases, filterMessage,
                 Text("With both filters off, the last observed enemy position remains in view.", 12, "#8C9DB1"), filterError
             }
+                    }
                 }
             }
         };

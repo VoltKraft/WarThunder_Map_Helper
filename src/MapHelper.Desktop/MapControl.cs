@@ -110,7 +110,13 @@ public sealed class MapControl(IconRepository icons) : Control
         context.DrawRectangle(null, new Pen(Brush("#354453"), 1), rect);
         // Range is a physical distance and can extend beyond the original map image.
         // Clip navigation aids to the viewport, never to the geographic map boundary.
-        var player = _scene.Contacts.FirstOrDefault(c => c.Observation.Affiliation == Affiliation.Self && c.Phase == ContactPhase.Live);
+        var player = _scene.Contacts.FirstOrDefault(c => c.Observation.Affiliation == Affiliation.Self
+            && c.Phase == ContactPhase.Live && !c.Observation.Destroyed && c.Position.IsFinite);
+        var compassRays = CompassRays;
+        if (player != null)
+            foreach (var ray in compassRays)
+                context.DrawLine(new Pen(Brush(ray.Cardinal != null ? "#999CB6C9" : "#669CB6C9"), .7),
+                    Project(player.Position), new(ray.End.X, ray.End.Y));
         if (player != null && _scene.Live)
         {
             var p = Project(player.Position);
@@ -158,6 +164,32 @@ public sealed class MapControl(IconRepository icons) : Control
         context.DrawLine(new Pen(Light, 2), new(24, sy), new(24 + length, sy));
         Label(context, ContactInformation.Distance(meters), 24, sy - 22, 11, Light);
         Label(context, map.Key == "demo" ? "DEMO / SYNTHETIC MAP" : _image == null ? "LOADING MAP IMAGE" : "WAR THUNDER / TACTICAL MAP", Bounds.Width - 253, Bounds.Height - 28, 10);
+        DrawCompassLabels(context, compassRays);
+    }
+    internal IReadOnlyList<CompassRay> CompassRays => Display.ShowCompass && _scene is { Live: true, Map.IsUsable: true }
+        && _scene.Contacts.FirstOrDefault(c => c.Observation.Affiliation == Affiliation.Self
+            && c.Phase == ContactPhase.Live && !c.Observation.Destroyed && c.Position.IsFinite) is { } player
+        ? Compass.Rays(new(Project(player.Position).X, Project(player.Position).Y), Bounds.Width, Bounds.Height, Display.CompassLineCount)
+        : [];
+    private void DrawCompassLabels(DrawingContext context, IReadOnlyList<CompassRay> rays)
+    {
+        // Draw cardinals last so optional degree labels never obscure them.
+        foreach (var ray in rays.OrderBy(r => r.Cardinal != null))
+        {
+            if (ray.Cardinal == null && !Display.ShowCompassDegrees) continue;
+            var text = new FormattedText(ray.Cardinal ?? ray.Degrees.ToString("0.#", English) + "°",
+                English, FlowDirection.LeftToRight, Typeface.Default, ray.Cardinal != null ? 13 : 11, Light);
+            var width = text.Width + 10; var height = text.Height + 6;
+            var x = Math.Clamp(ray.End.X - width / 2, 3, Math.Max(3, Bounds.Width - width - 3));
+            var y = Math.Clamp(ray.End.Y - height / 2, 3, Math.Max(3, Bounds.Height - height - 3));
+            // Keep perpendicular cardinal labels separate when the player reaches a corner.
+            var horizontalInset = Math.Min(36, Math.Max(3, (Bounds.Width - width) / 2));
+            var verticalInset = Math.Min(36, Math.Max(3, (Bounds.Height - height) / 2));
+            if (ray.Cardinal is "N" or "S") x = Math.Clamp(x, horizontalInset, Math.Max(horizontalInset, Bounds.Width - width - horizontalInset));
+            if (ray.Cardinal is "E" or "W") y = Math.Clamp(y, verticalInset, Math.Max(verticalInset, Bounds.Height - height - verticalInset));
+            context.DrawRectangle(Brush("#E8101B29"), null, new Rect(x, y, width, height), 3, 3);
+            context.DrawText(text, new Point(x + 5, y + 3));
+        }
     }
     private static double NiceDistance(double x)
     {
@@ -240,8 +272,12 @@ public sealed class MapControl(IconRepository icons) : Control
         context.DrawLine(new Pen(color, 1.5), start, end);
         context.DrawEllipse(color, new Pen(Brush("#101B29"), 1), start, 4, 4);
         context.DrawEllipse(color, new Pen(Brush("#101B29"), 1), end, 4, 4);
+        Label(context, "A", start.X + 7, start.Y - 20, 12, color);
+        Label(context, "B", end.X + 7, end.Y - 20, 12, color);
         var middle = Project((segment.Start + segment.End) / 2);
-        var text = new FormattedText(ContactInformation.Distance(segment.Meters), English, FlowDirection.LeftToRight, Typeface.Default, 13, color);
+        var bearing = segment.BearingDegrees is { } degrees ? degrees.ToString("0.#", English) + "°" : "—";
+        var text = new FormattedText(ContactInformation.Distance(segment.Meters) + " · A → B " + bearing,
+            English, FlowDirection.LeftToRight, Typeface.Default, 13, color);
         var box = new Rect(Math.Clamp(middle.X + 12, 8, Math.Max(8, Bounds.Width - text.Width - 24)),
             Math.Clamp(middle.Y + 12, 8, Math.Max(8, Bounds.Height - text.Height - 24)), text.Width + 16, text.Height + 10);
         context.DrawRectangle(Brush("#F0101B29"), new Pen(color, 1), box, 4, 4);

@@ -3,6 +3,8 @@ namespace MapHelper.Core;
 public sealed record MeasuredSegment(Vec2 Start, Vec2 End)
 {
     public double Meters => (End - Start).Length;
+    /// <summary>Clockwise degrees from map north, from the drag start (A) to its end (B); null if undefined.</summary>
+    public double? BearingDegrees => Compass.Bearing(Start, End);
 }
 
 public sealed class DistanceMeasurement

@@ -1,6 +1,8 @@
 namespace MapHelper.Core;
 
-public sealed record MapDisplayOptions(bool ShowAllies = true, bool SquadVectors = true, bool TargetVector = true);
+/// <summary>Persisted map overlays; compass bearings use north as 0 degrees, increasing clockwise.</summary>
+public sealed record MapDisplayOptions(bool ShowAllies = true, bool SquadVectors = true, bool TargetVector = true,
+    bool ShowCompass = true, int CompassLineCount = 4, bool ShowCompassDegrees = false);
 public sealed record ContactVector(long TrackId, Vec2 Start, Vec2 End, bool IsTarget, bool Estimated);
 public sealed record NavigationFocus(long TrackId, Vec2 Position, bool Estimated, bool ApiMarked);
 
