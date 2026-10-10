@@ -13,12 +13,17 @@ declared licenses, upstream sources, and the copied notice filenames.
 | Component | License and authoritative source | Use |
 | --- | --- | --- |
 | .NET runtime | [MIT and bundled third-party notices](https://github.com/dotnet/runtime/blob/main/LICENSE.TXT) | Self-contained application runtime |
-| Avalonia 12 and its companion packages | [MIT](https://github.com/AvaloniaUI/Avalonia/blob/master/licence.md) | Desktop UI, windowing, headless tests |
+| Avalonia 12 and its companion packages | [MIT declaration](https://github.com/AvaloniaUI/Avalonia/blob/master/licence.md) and [third-party notices](https://github.com/AvaloniaUI/Avalonia/blob/master/NOTICE.md), including MS-PL controls; compatibility unresolved | Desktop UI, windowing, headless tests |
 | SkiaSharp and HarfBuzzSharp | [MIT and bundled native notices](https://github.com/mono/SkiaSharp/blob/main/LICENSE.txt) | Graphics and text shaping |
 | ANGLE, through Avalonia's Windows native package | [BSD-3-Clause](https://www.nuget.org/packages/Avalonia.Angle.Windows.Natives/2.1.27548.20260419/License) and included upstream notices | Windows graphics translation |
 | Inter font | [SIL Open Font License 1.1](https://github.com/rsms/inter/blob/master/LICENSE.txt) | Embedded UI font; the Avalonia wrapper is MIT |
 | MicroCom.Runtime | [MIT](https://github.com/AvaloniaUI/MicroCom/blob/master/LICENSE) | Native interop |
 | Tmds.DBus.Protocol | [MIT](https://github.com/tmds/Tmds.DBus/blob/main/COPYING) | Linux desktop integration |
+
+The Avalonia 12.1.4 review found explicitly MS-PL-licensed control code in the
+shipped assembly, also present in 12.1.3. The top-level MIT declaration is not
+a complete compatibility assessment. See the evidence and approval conditions
+in [Validation](docs/VALIDATION.md#avalonia-update-review-on-2026-10-10).
 
 The English SVG icon renderer adapts MIT-licensed code from
 [SkiaSharp.Extended](https://github.com/mono/SkiaSharp.Extended). Its vendored
