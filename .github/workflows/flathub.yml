@@ -71,7 +71,7 @@ jobs:
           python3 automation/tools/prepare-flathub-release.py --source-root source --release-json release.json --commit "$SOURCE_COMMIT" --nuget-x64 nuget-x64.json --nuget-arm64 nuget-arm64.json --output-dir flatpak-release-inputs
           cmp source/packaging/flatpak/flathub/nuget-sources.json flatpak-release-inputs/nuget-sources.json
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: flatpak-release-inputs-${{ steps.release.outputs.tag }}
           path: flatpak-release-inputs/

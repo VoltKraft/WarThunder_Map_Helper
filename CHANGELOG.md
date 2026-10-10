@@ -8,6 +8,11 @@ Both specifications were checked on their official websites for this update.
 
 ## [Unreleased]
 
+### Changed
+
+- Update SkiaSharp and its native packages to 4.153.1 and regenerate the Linux
+  x64/ARM64 offline feed from verified NuGet archives.
+
 ## [0.3.0] - 2026-10-03
 
 ### Added
