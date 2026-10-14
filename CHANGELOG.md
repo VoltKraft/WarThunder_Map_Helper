@@ -8,6 +8,19 @@ Both specifications were checked on their official websites for this update.
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-10-14
+
+### Fixed
+
+- Pin reduced Avalonia assembly metadata to its upstream source revision so
+  application commits do not change the rebuilt package bytes.
+- Evict stale cached copies of the private framework packages after rebuilding
+  them, before NuGet restore, while keeping package verification strict.
+
+### Changed
+
+- Update Microsoft.NET.Test.Sdk to 18.11.0 in both test projects.
+
 ## [0.3.1] - 2026-10-14
 
 ### Changed
@@ -128,7 +141,8 @@ automation; it does not claim an earlier GitHub release or tag exists.
 - Logic, integration, and Avalonia interaction tests, with recorded API
   fixtures and documented live-game validation limits.
 
-[Unreleased]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.3.2...HEAD
+[0.3.2]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.2.4...v0.3.0
 [0.2.4]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.2.1...v0.2.4
