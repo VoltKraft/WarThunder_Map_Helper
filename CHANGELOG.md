@@ -8,10 +8,21 @@ Both specifications were checked on their official websites for this update.
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-10-14
+
 ### Changed
 
 - Update SkiaSharp and its native packages to 4.153.1 and regenerate the Linux
   x64/ARM64 offline feed from verified NuGet archives.
+- Build a reduced Avalonia 12.1.4 variant from pinned sources for Windows and
+  Linux, preserving upstream attribution and recording the modified components.
+
+### Fixed
+
+- Remove bundled MS-PL controls, affected theme resources, and the
+  Silverlight-derived layout transform from the distributed application.
+- Verify rebuilt framework provenance and final DLL checksums before packaging
+  to prevent silently distributing the original implementations.
 
 ## [0.3.0] - 2026-10-03
 
@@ -117,7 +128,8 @@ automation; it does not claim an earlier GitHub release or tag exists.
 - Logic, integration, and Avalonia interaction tests, with recorded API
   fixtures and documented live-game validation limits.
 
-[Unreleased]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.2.4...v0.3.0
 [0.2.4]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.2.1...v0.2.4
 [0.2.1]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.2.0...v0.2.1
