@@ -9,6 +9,7 @@ from pathlib import Path
 import struct
 
 from release_metadata import ROOT, read_version, validate_version
+from verify_reduced_avalonia import verify as verify_reduced_avalonia
 
 RUNTIMES = ("win-x64", "win-arm64", "linux-x64", "linux-arm64")
 
@@ -47,6 +48,7 @@ def verify_publish(root: Path, version: str, runtime: str) -> dict[str, object]:
         raise ValueError("Publish output must not contain symbolic links.")
     if runtime.startswith("linux-") and os.name != "nt" and not (publish / executable).stat().st_mode & 0o111:
         raise ValueError("Linux executable bit is missing.")
+    verify_reduced_avalonia(root / "src/MapHelper.Desktop/obj/project.assets.json", root, publish)
     return {"files": len(expected), "architecture": runtime, "licensesPresent": True}
 
 

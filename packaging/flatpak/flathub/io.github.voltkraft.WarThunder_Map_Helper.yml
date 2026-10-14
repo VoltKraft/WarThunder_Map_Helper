@@ -25,6 +25,8 @@ modules:
   - name: map-helper
     buildsystem: simple
     build-commands:
+      - python3 scripts/build_reduced_avalonia.py --source-archive reduced-inputs/avalonia-source.tar.gz --upstream-packages nuget-sources --output .build-cache/reduced-avalonia/feed --work-dir .build-cache/reduced-avalonia/build --dotnet /run/build/map-helper/dotnet-sdk/dotnet
+      - cp .build-cache/reduced-avalonia/feed/*.nupkg nuget-sources/
       - |
         case "${FLATPAK_ARCH}" in
           x86_64) dotnet_runtime=linux-x64 ;;
@@ -32,12 +34,17 @@ modules:
           *) echo "Unsupported Flatpak architecture: ${FLATPAK_ARCH}" >&2; exit 1 ;;
         esac
         test -n "$(find "dotnet-sdk/packs/Microsoft.NETCore.App.Host.${dotnet_runtime}" -type f -name apphost -print -quit)"
+        # The sandbox has one verified offline feed, including its source-built
+        # packages. Do not inherit the online development source mapping.
+        printf '%s\n' '<configuration><packageSources><clear/><add key="offline" value="nuget-sources"/></packageSources><packageSourceMapping><clear/></packageSourceMapping></configuration>' > offline.nuget.config
         dotnet publish src/MapHelper.Desktop/MapHelper.Desktop.csproj \
           --configuration Release --runtime "${dotnet_runtime}" \
           --self-contained true --source ./nuget-sources \
+          -p:RestoreConfigFile=/run/build/map-helper/offline.nuget.config \
           -p:NuGetAudit=false -p:PublishSingleFile=false -p:UseAppHost=true \
           --output ${FLATPAK_DEST}/lib/war-thunder-map-helper
       - python3 scripts/check_dependency_licenses.py --assets src/MapHelper.Desktop/obj/project.assets.json
+      - python3 scripts/verify_reduced_avalonia.py --publish ${FLATPAK_DEST}/lib/war-thunder-map-helper
       - install -dm755 ${FLATPAK_DEST}/bin
       - ln -s /app/lib/war-thunder-map-helper/WarThunderMapHelper ${FLATPAK_DEST}/bin/war-thunder-map-helper
       - install -Dm644 packaging/flatpak/io.github.voltkraft.WarThunder_Map_Helper.desktop ${FLATPAK_DEST}/share/applications/io.github.voltkraft.WarThunder_Map_Helper.desktop
@@ -91,4 +98,10 @@ modules:
         only-arches: [aarch64]
         url: https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.401/dotnet-sdk-10.0.401-linux-arm64.tar.gz
         sha512: 58ace73ced6b4360754689a686bdfb8a317f4da6cb8bb416dbc7d0ba9f47e43e3c09f5eb1f1a1cfaacbd10df9558da4882bf2a5e195d6ab56a02c1f9f76102ed
+      # Source-only input: the sandbox compiles the reduced framework itself.
+      - type: file
+        dest: reduced-inputs
+        dest-filename: avalonia-source.tar.gz
+        url: https://codeload.github.com/AvaloniaUI/Avalonia/tar.gz/2d79ba55fae1b1e71c69f93a668080c9029e6a31
+        sha512: abe92b215924d8f556f79808a0f2070f2c5bbdc795230c774405a11d7471736abdb99b58cf8bef97cda824b920731d1c71fda6ad9aacb1956601b5e65b9f9399
       - nuget-sources.json

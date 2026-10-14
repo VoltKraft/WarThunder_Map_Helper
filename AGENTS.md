@@ -39,6 +39,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed boundaries.
 Run from the repository root with the SDK selected by `global.json`:
 
 ```text
+python scripts/prepare_reduced_avalonia.py
 dotnet restore WarThunderMapHelper.slnx
 dotnet run --project src/MapHelper.Desktop -- --demo
 dotnet build WarThunderMapHelper.slnx -c Release --no-restore

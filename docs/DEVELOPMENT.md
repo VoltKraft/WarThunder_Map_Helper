@@ -14,8 +14,10 @@
   listed in [Distribution](DISTRIBUTION.md).
 
 The solution contains application/test projects; Windows-only WiX authoring
-is invoked separately. `NuGet.Config` uses the public NuGet feed. SDK and
-dependency downloads need network access on the first build.
+is invoked separately. `NuGet.Config` maps the two locally rebuilt Avalonia
+packages to a dedicated feed and all other packages to nuget.org. SDK and
+dependency downloads need network access on the first build. See
+[Reduced Avalonia](REDUCED_AVALONIA.md) for provenance and maintenance.
 
 ## Common commands
 
@@ -23,6 +25,7 @@ Run these commands from the repository root. On systems that expose Python
 as `python3`, use that name in place of `python`.
 
 ```sh
+python scripts/prepare_reduced_avalonia.py
 dotnet restore WarThunderMapHelper.slnx
 dotnet build WarThunderMapHelper.slnx -c Release --no-restore
 dotnet test WarThunderMapHelper.slnx -c Release --no-build
@@ -61,17 +64,18 @@ dotnet format whitespace WarThunderMapHelper.slnx --no-restore
 
 ## Dependency updates
 
-Dependabot groups Avalonia and SkiaSharp updates because the managed rendering
-API and native libraries must be tested together. The direct Linux native Skia
+Avalonia updates require the source review and local rebuild described in
+[Reduced Avalonia](REDUCED_AVALONIA.md). Dependabot must not replace these pins
+with unreviewed upstream binaries. The direct Linux native Skia
 package must match the direct SkiaSharp version. Regenerate both architecture
 feeds and review the supplemental license catalog after runtime updates; see
 [Flatpak inputs](FLATPAK.md).
 
-The UI tests retain `xunit.v3` 3.2.2. Avalonia.Headless.XUnit 12.1.3 calls the
+The UI tests retain `xunit.v3` 3.2.2. Avalonia.Headless.XUnit 12.1.4 calls the
 3.x discovery API, which was removed in xUnit 4 and produces a
 `MissingMethodException` during discovery. Dependabot excludes major updates
 for this package until the Avalonia adapter supports that API. Recheck this
-restriction when updating the adapter; all 65 UI tests must be discovered and
+restriction when updating the adapter; all UI tests must be discovered and
 pass before removing it. Both test projects continue to use VSTest and the
 commands above.
 

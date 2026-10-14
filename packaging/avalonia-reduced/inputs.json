@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "upstreamVersion": "12.1.4",
+  "packageVersion": "12.1.4.1",
+  "upstreamCommit": "2d79ba55fae1b1e71c69f93a668080c9029e6a31",
+  "source": {
+    "url": "https://codeload.github.com/AvaloniaUI/Avalonia/tar.gz/2d79ba55fae1b1e71c69f93a668080c9029e6a31",
+    "sha512": "abe92b215924d8f556f79808a0f2070f2c5bbdc795230c774405a11d7471736abdb99b58cf8bef97cda824b920731d1c71fda6ad9aacb1956601b5e65b9f9399",
+    "filename": "avalonia-source.tar.gz"
+  },
+  "packages": [
+    {
+      "id": "Avalonia",
+      "version": "12.1.4",
+      "url": "https://api.nuget.org/v3-flatcontainer/avalonia/12.1.4/avalonia.12.1.4.nupkg",
+      "sha512": "b0ec6f4eabc0a296cdcc3b7117c0f44a301e82d5c764d7c864d8bf9acfd98c6ac470576ad1b7c7a16fa01800395683d90133a587e51bad78ab7eba4045b5da1b",
+      "filename": "avalonia.12.1.4.nupkg"
+    },
+    {
+      "id": "Avalonia.Themes.Fluent",
+      "version": "12.1.4",
+      "url": "https://api.nuget.org/v3-flatcontainer/avalonia.themes.fluent/12.1.4/avalonia.themes.fluent.12.1.4.nupkg",
+      "sha512": "2671c16b7efb2e1fa83de35be72c6ad4a148e7bce404098187ea0c8dcc84a6334435ff22ee423bb33c594ec263822a1df58e8e9230aea8bfda255aca1b2d7fa8",
+      "filename": "avalonia.themes.fluent.12.1.4.nupkg"
+    },
+    {
+      "id": "Avalonia.Remote.Protocol",
+      "version": "12.1.4",
+      "url": "https://api.nuget.org/v3-flatcontainer/avalonia.remote.protocol/12.1.4/avalonia.remote.protocol.12.1.4.nupkg",
+      "sha512": "8d6e87d4b5b84f0471078bfb6cd6f39fc28318efb0d15dfe015eb4385a90449b3c9c73f4038c7a17742582555c97842cb6e428743e1bde3c9c00b0bb8b0fc0ee",
+      "filename": "avalonia.remote.protocol.12.1.4.nupkg"
+    }
+  ]
+}

@@ -6,6 +6,9 @@ updates:
       interval: weekly
     open-pull-requests-limit: 5
     ignore:
+      # The reduced build needs a source-level review and regenerated packages.
+      # See docs/REDUCED_AVALONIA.md; never replace the local variant automatically.
+      - dependency-name: "Avalonia*"
       # Remove when Avalonia.Headless.XUnit supports the xUnit 4.x discovery API.
       - dependency-name: "xunit.v3"
         update-types: ["version-update:semver-major"]

@@ -3,6 +3,20 @@
     "12.1.3": [
       "Avalonia-LICENSE.md",
       "Avalonia-NOTICE.md"
+    ],
+    "12.1.4": [
+      "Avalonia-LICENSE.md",
+      "Avalonia-NOTICE.md"
+    ],
+    "12.1.4.1": [
+      "Avalonia-LICENSE.md",
+      "Avalonia-NOTICE.md",
+      "HandyControl-LICENSE.txt",
+      "SixLabors-Fonts-LICENSE.txt",
+      "LottieSharp-LICENSE.txt",
+      "WindowsCommunityToolkit-LICENSE.txt",
+      "Folio-LineBreak-LICENSE.txt",
+      "Folio-UnicodeTrie-LICENSE.txt"
     ]
   },
   "avalonia.buildservices": {
@@ -14,10 +28,19 @@
     "12.1.3": [
       "Avalonia-LICENSE.md",
       "Avalonia-NOTICE.md"
+    ],
+    "12.1.4": [
+      "Avalonia-LICENSE.md",
+      "Avalonia-NOTICE.md"
     ]
   },
   "avalonia.fonts.inter": {
     "12.1.3": [
+      "Avalonia-LICENSE.md",
+      "Avalonia-NOTICE.md",
+      "Inter-OFL.txt"
+    ],
+    "12.1.4": [
       "Avalonia-LICENSE.md",
       "Avalonia-NOTICE.md",
       "Inter-OFL.txt"
@@ -27,10 +50,18 @@
     "12.1.3": [
       "Avalonia-LICENSE.md",
       "Avalonia-NOTICE.md"
+    ],
+    "12.1.4": [
+      "Avalonia-LICENSE.md",
+      "Avalonia-NOTICE.md"
     ]
   },
   "avalonia.freedesktop.atspi": {
     "12.1.3": [
+      "Avalonia-LICENSE.md",
+      "Avalonia-NOTICE.md"
+    ],
+    "12.1.4": [
       "Avalonia-LICENSE.md",
       "Avalonia-NOTICE.md"
     ]
@@ -39,10 +70,18 @@
     "12.1.3": [
       "Avalonia-LICENSE.md",
       "Avalonia-NOTICE.md"
+    ],
+    "12.1.4": [
+      "Avalonia-LICENSE.md",
+      "Avalonia-NOTICE.md"
     ]
   },
   "avalonia.native": {
     "12.1.3": [
+      "Avalonia-LICENSE.md",
+      "Avalonia-NOTICE.md"
+    ],
+    "12.1.4": [
       "Avalonia-LICENSE.md",
       "Avalonia-NOTICE.md"
     ]
@@ -51,10 +90,18 @@
     "12.1.3": [
       "Avalonia-LICENSE.md",
       "Avalonia-NOTICE.md"
+    ],
+    "12.1.4": [
+      "Avalonia-LICENSE.md",
+      "Avalonia-NOTICE.md"
     ]
   },
   "avalonia.skia": {
     "12.1.3": [
+      "Avalonia-LICENSE.md",
+      "Avalonia-NOTICE.md"
+    ],
+    "12.1.4": [
       "Avalonia-LICENSE.md",
       "Avalonia-NOTICE.md"
     ]
@@ -63,16 +110,32 @@
     "12.1.3": [
       "Avalonia-LICENSE.md",
       "Avalonia-NOTICE.md"
+    ],
+    "12.1.4": [
+      "Avalonia-LICENSE.md",
+      "Avalonia-NOTICE.md"
+    ],
+    "12.1.4.1": [
+      "Avalonia-LICENSE.md",
+      "Avalonia-NOTICE.md"
     ]
   },
   "avalonia.win32": {
     "12.1.3": [
       "Avalonia-LICENSE.md",
       "Avalonia-NOTICE.md"
+    ],
+    "12.1.4": [
+      "Avalonia-LICENSE.md",
+      "Avalonia-NOTICE.md"
     ]
   },
   "avalonia.x11": {
     "12.1.3": [
+      "Avalonia-LICENSE.md",
+      "Avalonia-NOTICE.md"
+    ],
+    "12.1.4": [
       "Avalonia-LICENSE.md",
       "Avalonia-NOTICE.md"
     ]

@@ -28,10 +28,15 @@
   <screenshots>
     <screenshot type="default">
       <caption>Map and telemetry using sample data</caption>
-      <image>https://raw.githubusercontent.com/VoltKraft/WarThunder_Map_Helper/v0.3.0/packaging/flatpak/screenshots/map.png</image>
+      <image>https://raw.githubusercontent.com/VoltKraft/WarThunder_Map_Helper/v0.3.1/packaging/flatpak/screenshots/map.png</image>
     </screenshot>
   </screenshots>
   <releases>
+    <release version="0.3.1" date="2026-10-14">
+      <description><p>Build a reduced Avalonia framework from reviewed sources,
+      remove incompatible bundled components, update graphics dependencies,
+      and verify framework provenance before packaging.</p></description>
+    </release>
     <release version="0.3.0" date="2026-10-03">
       <description><p>Add a configurable player compass with cardinal and optional
       degree labels, and directional bearings for distance measurements.</p></description>

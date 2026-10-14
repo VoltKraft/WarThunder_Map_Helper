@@ -109,6 +109,8 @@ def main() -> int:
     try:
         policy = json.loads(args.policy.read_text(encoding="utf-8"))
         verified = check_graph(args.assets, policy)
+        from verify_reduced_avalonia import verify
+        verify(args.assets, root)
     except (LicenseError, OSError, ValueError, KeyError, ET.ParseError) as error:
         print(f"Dependency license check failed: {error}", file=sys.stderr)
         return 1

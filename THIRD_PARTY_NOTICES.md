@@ -13,12 +13,31 @@ declared licenses, upstream sources, and the copied notice filenames.
 | Component | License and authoritative source | Use |
 | --- | --- | --- |
 | .NET runtime | [MIT and bundled third-party notices](https://github.com/dotnet/runtime/blob/main/LICENSE.TXT) | Self-contained application runtime |
-| Avalonia 12 and its companion packages | [MIT](https://github.com/AvaloniaUI/Avalonia/blob/master/licence.md) | Desktop UI, windowing, headless tests |
+| Reduced Avalonia 12.1.4 and official companion packages | [MIT declaration](https://github.com/AvaloniaUI/Avalonia/blob/2d79ba55fae1b1e71c69f93a668080c9029e6a31/licence.md) and [third-party notices](https://github.com/AvaloniaUI/Avalonia/blob/2d79ba55fae1b1e71c69f93a668080c9029e6a31/NOTICE.md); affected MS-PL implementations removed in our build | Desktop UI, windowing, headless tests |
 | SkiaSharp and HarfBuzzSharp | [MIT and bundled native notices](https://github.com/mono/SkiaSharp/blob/main/LICENSE.txt) | Graphics and text shaping |
 | ANGLE, through Avalonia's Windows native package | [BSD-3-Clause](https://www.nuget.org/packages/Avalonia.Angle.Windows.Natives/2.1.27548.20260419/License) and included upstream notices | Windows graphics translation |
 | Inter font | [SIL Open Font License 1.1](https://github.com/rsms/inter/blob/master/LICENSE.txt) | Embedded UI font; the Avalonia wrapper is MIT |
 | MicroCom.Runtime | [MIT](https://github.com/AvaloniaUI/MicroCom/blob/master/LICENSE) | Native interop |
 | Tmds.DBus.Protocol | [MIT](https://github.com/tmds/Tmds.DBus/blob/main/COPYING) | Linux desktop integration |
+
+The application uses locally rebuilt Controls and Fluent assemblies, packaged
+as `Avalonia` and `Avalonia.Themes.Fluent` 12.1.4.1. This is a project-specific
+variant, not an official Avalonia release. The affected controls, templates,
+and Silverlight-derived layout transform are excluded. Upstream NOTICE is
+preserved verbatim even where it describes removed components. See
+[Reduced Avalonia](docs/REDUCED_AVALONIA.md) for build provenance, limitations,
+and the source-removal inventory.
+
+The reduced package reuses official Avalonia.Base and other unaffected
+assemblies. Retained source attributions include HandyControl RelativePanel
+(MIT), historical SixLabors Fonts and LottieSharp code (Apache-2.0), Windows
+Community Toolkit (MIT), and foliojs linebreak/unicode-trie (MIT via the
+RichTextKit port). Their unmodified license texts are preserved alongside
+Avalonia's complete upstream NOTICE. Color interpolation credits Romain Guy
+and Francois Blavoet as recorded in the upstream source. These supplements
+cover both retained Controls source and reused official Base binaries; they
+do not imply that all Avalonia assemblies were rebuilt. See
+`packaging/flatpak/licenses/sources.json` for the exact revisions and checksums.
 
 The English SVG icon renderer adapts MIT-licensed code from
 [SkiaSharp.Extended](https://github.com/mono/SkiaSharp.Extended). Its vendored

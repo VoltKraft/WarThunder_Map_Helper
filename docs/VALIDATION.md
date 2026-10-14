@@ -5,6 +5,98 @@ observations. Commands are described in [Development](DEVELOPMENT.md) and
 [Distribution](DISTRIBUTION.md). Local checks do not establish successful
 GitHub Actions execution or publication to a package repository.
 
+## Reduced Avalonia candidate on 2026-10-14
+
+- Built the reduced Controls and Fluent assemblies from pinned 12.1.4 sources
+  with zero warnings or errors. Removed 45 source/resource files and adapted
+  four resource files; retained upstream license texts unchanged.
+- Rebuilt both local NuGet packages in different-length work directories and
+  obtained byte-identical archives. The exact SDK and source/compiler-input
+  hashes are verified before compilation.
+- Release application build passed without warnings. All 254 tests passed:
+  177 logic/integration and 77 UI tests, including removed-type checks,
+  missing date/time templates, and existing dropdown interaction coverage.
+- Both isolated offline-feed generators succeeded. The merged feed contains
+  30 official NuGet compiler/runtime inputs; reduced packages are compiled
+  inside the Flatpak sandbox rather than downloaded as binaries.
+- Native Linux x64 publishing passed architecture, notice collection, and
+  reduced-DLL provenance/checksum validation (312 files). No local graphical
+  smoke test was run because this environment has no display or Xvfb.
+- Windows, ARM64, and real Flatpak sandbox validation are required in CI
+  before publication. These local results do not establish a published release.
+
+See [Reduced Avalonia](REDUCED_AVALONIA.md) for the maintained variant and its
+limitations, including transformed popup layout and unsupported controls.
+
+## Release hold confirmed on 2026-10-14
+
+This earlier decision was superseded by the maintainer's subsequent choice to
+remove or replace the affected components. The implementation and its release
+conditions are described in [Reduced Avalonia](REDUCED_AVALONIA.md).
+
+The maintainer chose to defer the next release until a compatible license grant
+is documented, rather than maintain a reduced Avalonia framework build.
+PR #7 remains a draft. PR #9 contained identical package changes and was closed
+as a duplicate. Do not clear the packaging gates or publish a new version on
+the basis of passing application tests alone.
+
+The follow-up review found no newer stable Avalonia release than 12.1.4 and no
+applicable additional license grant in the upstream material inspected. In
+addition to the C# components described below, seven Fluent theme templates
+retain explicit MS-PL notices, including
+[DatePicker.xaml](https://github.com/AvaloniaUI/Avalonia/blob/2d79ba55fae1b1e71c69f93a668080c9029e6a31/src/Avalonia.Themes.Fluent/Controls/DatePicker.xaml).
+The application's Fluent theme imports these resources. Simply enabling
+trimming or avoiding calendar controls has not been established as a solution.
+
+The current main CI passed all four native targets and both Flatpak builds.
+The subsequent successful Release workflow did not publish the merged
+dependency updates: its version was still the already published 0.3.0. A
+future release needs the license decision resolved first, followed by matching
+notices, regenerated feeds, version/changelog/AppStream updates, and successful
+CI for the exact main commit. No new release was created during this review.
+
+## Avalonia update review on 2026-10-10
+
+Dependabot PR #7 proposes Avalonia 12.1.4. Its application tests pass, but the
+update is **blocked by an unresolved dependency-license compatibility concern**.
+The supplemental license catalog has deliberately not been extended to 12.1.4.
+
+- The official Avalonia 12.1.4 NuGet package identifies source commit
+  `2d79ba55fae1b1e71c69f93a668080c9029e6a31`. Its
+  [Calendar](https://github.com/AvaloniaUI/Avalonia/blob/2d79ba55fae1b1e71c69f93a668080c9029e6a31/src/Avalonia.Controls/Calendar/Calendar.cs),
+  [AutoCompleteBox](https://github.com/AvaloniaUI/Avalonia/blob/2d79ba55fae1b1e71c69f93a668080c9029e6a31/src/Avalonia.Controls/AutoCompleteBox/AutoCompleteBox.cs),
+  and CalendarDatePicker sources explicitly retain Microsoft Public License
+  (MS-PL) headers. These types are present in the shipped
+  `lib/net10.0/Avalonia.Controls.dll`, as verified from its CLI type metadata.
+- This concern also applies to the existing 12.1.3 package; retaining that
+  version does not resolve it. Calendar and AutoCompleteBox source bytes are
+  unchanged between the two release commits. CalendarDatePicker changes in
+  12.1.4 while retaining its MS-PL header.
+- The [FSF license list](https://www.gnu.org/licenses/license-list.html#ms-pl)
+  identifies MS-PL as GPL-incompatible. No alternative grant for these files
+  was found in the reviewed upstream license, notices, or file headers. The
+  top-level MIT package declaration does not resolve their compatibility with
+  this project's AGPL-3.0-only distribution.
+- The upstream MIT license and complete NOTICE files are byte-identical to
+  the existing supplements. Inter font blobs and the non-Avalonia dependency
+  versions are also unchanged. This comparison is not an approval of the
+  complete bundled code's license compatibility.
+- Local validation of the candidate combined with merged PRs #4, #5, #6,
+  and #8 used SDK 10.0.401: Release build passed without warnings; all 177
+  logic and 69 UI tests passed. The declared-license gate passed for 26
+  packages, demonstrating its limit: it checks package declarations and does
+  not detect differing source-level license terms within a package.
+- Both isolated Linux feed generators succeeded with 28 verified packages
+  each. The generated feeds remain uncommitted candidate artifacts. The
+  supplemental catalog and committed feed must only be updated after the
+  licensing concern is resolved and packaging is validated again.
+
+Before approving this update or a release, obtain a documented compatible
+license grant for the affected code, or validate a build that removes or
+replaces it under compatible terms. Removing notices or bypassing the
+license checks is not a resolution. No application version or release was
+published as part of this review.
+
 ## SkiaSharp update candidate on 2026-10-03
 
 - Dependabot PR #4 updates SkiaSharp and Linux native assets from 4.152.1 to

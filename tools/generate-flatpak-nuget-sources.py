@@ -22,6 +22,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 
@@ -29,6 +30,12 @@ NUGET_INDEX = "https://api.nuget.org/v3/index.json"
 COMPONENT_RE = re.compile(r"[a-z0-9][a-z0-9._+-]*")
 APP_ID = "io.github.voltkraft.WarThunder_Map_Helper"
 PROJECT = Path("src/MapHelper.Desktop/MapHelper.Desktop.csproj")
+PREPARE_SPEC = importlib.util.spec_from_file_location(
+    "prepare_reduced_avalonia", Path(__file__).resolve().parents[1] / "scripts/prepare_reduced_avalonia.py"
+)
+assert PREPARE_SPEC is not None and PREPARE_SPEC.loader is not None
+PREPARE = importlib.util.module_from_spec(PREPARE_SPEC)
+PREPARE_SPEC.loader.exec_module(PREPARE)
 SDK_PACK_PREFIXES = (
     "microsoft.netcore.app.runtime.", "microsoft.netcore.app.host.",
     "microsoft.aspnetcore.app.runtime.", "microsoft.windowsdesktop.app.runtime.",
@@ -97,8 +104,9 @@ def required_packages(artifacts: Path, package_cache: Path) -> set[tuple[str, st
     return required
 
 
-def collect_sources(package_cache: Path, artifacts: Path, runtime: str) -> list[dict[str, str]]:
-    """Verify the complete fresh cache and produce official NuGet download entries."""
+def collect_sources(package_cache: Path, artifacts: Path, runtime: str,
+                    custom_feed: Path | None = None, custom_version: str | None = None) -> list[dict[str, str]]:
+    """Verify official inputs and exact local outputs without emitting local download URLs."""
     required = required_packages(artifacts, package_cache)
     found: set[tuple[str, str]] = set()
     sources: list[dict[str, str]] = []
@@ -113,7 +121,11 @@ def collect_sources(package_cache: Path, artifacts: Path, runtime: str) -> list[
         if any(path.is_symlink() or not path.is_file() for path in (archive, hash_file, metadata_file)):
             raise GeneratorError(f"package archive or checksum metadata is missing: {package}/{version}")
         metadata = json.loads(metadata_file.read_text(encoding="utf-8"))
-        if metadata.get("source") != NUGET_INDEX:
+        custom = custom_feed is not None and package in PREPARE.CUSTOM_IDS
+        if custom:
+            if version != custom_version or metadata.get("source") != str(custom_feed):
+                raise GeneratorError(f"reduced package did not come from the isolated source build: {package}/{version}")
+        elif metadata.get("source") != NUGET_INDEX:
             raise GeneratorError(f"package was not restored from the official NuGet source: {package}/{version}")
         with archive.open("rb") as source:
             checksum = hashlib.sha512()
@@ -128,8 +140,15 @@ def collect_sources(package_cache: Path, artifacts: Path, runtime: str) -> list[
             raise GeneratorError(f"invalid NuGet checksum: {package}/{version}") from exc
         if len(expected) != 64 or digest != expected:
             raise GeneratorError(f"NuGet archive checksum mismatch: {package}/{version}")
+        if custom:
+            built = custom_feed / filename
+            if built.is_symlink() or not built.is_file():
+                raise GeneratorError(f"reduced source build output is missing: {filename}")
+            with built.open("rb") as stream:
+                if hashlib.file_digest(stream, "sha512").digest() != digest:
+                    raise GeneratorError(f"restored package differs from the reduced source build: {filename}")
         found.add((package, version))
-        if not is_target_package(package, runtime):
+        if custom or not is_target_package(package, runtime):
             continue
         sources.append({
             "type": "file",
@@ -143,6 +162,8 @@ def collect_sources(package_cache: Path, artifacts: Path, runtime: str) -> list[
         raise GeneratorError("restored packages are absent from the fresh cache: " + ", ".join(
             f"{package}/{version}" for package, version in sorted(missing)
         ))
+    if custom_feed is not None and not {(name, custom_version) for name in PREPARE.CUSTOM_IDS}.issubset(found):
+        raise GeneratorError("restore did not resolve both reduced Avalonia packages")
     if not any(package == f"microsoft.netcore.app.runtime.{runtime}" for package, _ in found):
         raise GeneratorError(f"self-contained runtime pack is missing for {runtime}")
     return sorted(sources, key=lambda source: source["dest-filename"])
@@ -169,11 +190,6 @@ def generate_sources(source_root: Path, runtime: str, output: Path) -> int:
             "sdk": {"version": version, "rollForward": "disable", "allowPrerelease": False}
         }), encoding="utf-8")
         config = root / "NuGet.Config"
-        config.write_text(
-            '<configuration><packageSources><clear/><add key="nuget.org" value="'
-            + NUGET_INDEX + '"/></packageSources><fallbackPackageFolders><clear/>'
-            '</fallbackPackageFolders></configuration>', encoding="utf-8"
-        )
         environment = {
             **os.environ,
             "DOTNET_CLI_HOME": str(root / "cli"),
@@ -191,16 +207,45 @@ def generate_sources(source_root: Path, runtime: str, output: Path) -> int:
         )
         if sdk.returncode != 0 or sdk.stdout.strip() != version:
             raise GeneratorError(f"the exact Flatpak SDK {version} must be installed and selected")
+        custom_feed = None
+        lock = None
+        if (source_root / PREPARE.LOCK_PATH).exists():
+            custom_feed = root / "reduced-feed"
+            lock = PREPARE.prepare(source_root, root / "reduced-build", custom_feed, dotnet)
+        configuration = ET.Element("configuration")
+        package_sources = ET.SubElement(configuration, "packageSources")
+        ET.SubElement(package_sources, "clear")
+        ET.SubElement(package_sources, "add", key="nuget.org", value=NUGET_INDEX)
+        if custom_feed is not None:
+            ET.SubElement(package_sources, "add", key="reduced-avalonia", value=str(custom_feed))
+            mapping = ET.SubElement(configuration, "packageSourceMapping")
+            ET.SubElement(mapping, "clear")
+            official = ET.SubElement(mapping, "packageSource", key="nuget.org")
+            ET.SubElement(official, "package", pattern="*")
+            reduced = ET.SubElement(mapping, "packageSource", key="reduced-avalonia")
+            for identity in sorted(PREPARE.CUSTOM_IDS):
+                ET.SubElement(reduced, "package", pattern=identity)
+        ET.SubElement(ET.SubElement(configuration, "fallbackPackageFolders"), "clear")
+        ET.ElementTree(configuration).write(config, encoding="utf-8", xml_declaration=True)
         print(f"Restoring {runtime} with pinned .NET SDK {version} into a fresh package cache.", flush=True)
         result = subprocess.run([
             dotnet, "restore", str(project), "--runtime", runtime,
             "-p:SelfContained=true", "--packages", str(packages),
             "--artifacts-path", str(artifacts), "--configfile", str(config),
-            "--source", NUGET_INDEX, "--force", "--no-http-cache", "--disable-build-servers",
+            "--force", "--no-http-cache", "--disable-build-servers",
         ], cwd=root, env=environment)
         if result.returncode != 0:
             raise GeneratorError(f"dotnet restore failed for {runtime} (exit code {result.returncode})")
-        sources = collect_sources(packages, artifacts, runtime)
+        sources = collect_sources(packages, artifacts, runtime, custom_feed,
+                                  lock["packageVersion"] if lock else None)
+        if lock is not None:
+            by_name = {item["dest-filename"]: item for item in sources}
+            for item in PREPARE.official_sources(lock):
+                previous = by_name.get(item["dest-filename"])
+                if previous is not None and previous != item:
+                    raise GeneratorError(f"framework compiler input checksum conflicts with restore: {item['dest-filename']}")
+                by_name[item["dest-filename"]] = item
+            sources = sorted(by_name.values(), key=lambda item: item["dest-filename"])
 
     output = output.resolve()
     output.parent.mkdir(parents=True, exist_ok=True)

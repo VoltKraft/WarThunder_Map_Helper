@@ -5,6 +5,7 @@ import hashlib
 import importlib.util
 import json
 import os
+import shutil
 import sys
 import tempfile
 import unittest
@@ -108,6 +109,40 @@ class FeedValidationTests(unittest.TestCase):
         path.write_text(json.dumps(metadata), encoding="utf-8")
         self.assertEqual(2, len(self.collect()))
 
+    def reduced_feed(self) -> Path:
+        feed = self.root / "local-source-build"
+        feed.mkdir()
+        for package in MODULE.PREPARE.CUSTOM_IDS:
+            archive = self.package(package, "12.1.4.1")
+            shutil.copyfile(archive, feed / archive.name)
+            (archive.parent / ".nupkg.metadata").write_text(json.dumps({"source": str(feed)}))
+            self.assets["libraries"][f"{package}/12.1.4.1"] = {"type": "package"}
+        self.write_assets()
+        return feed
+
+    def test_custom_packages_are_verified_against_source_build_and_never_emitted_as_urls(self) -> None:
+        feed = self.reduced_feed()
+        result = MODULE.collect_sources(self.packages, self.artifacts, "linux-x64", feed, "12.1.4.1")
+        self.assertEqual(2, len(result))
+        self.assertFalse(any("avalonia" in entry["url"] for entry in result))
+        (feed / "avalonia.12.1.4.1.nupkg").write_bytes(b"different build output")
+        with self.assertRaisesRegex(MODULE.GeneratorError, "differs from the reduced source build"):
+            MODULE.collect_sources(self.packages, self.artifacts, "linux-x64", feed, "12.1.4.1")
+
+    def test_rejects_official_or_wrong_version_substitution_for_custom_package(self) -> None:
+        feed = self.reduced_feed()
+        metadata = self.packages / "avalonia/12.1.4.1/.nupkg.metadata"
+        metadata.write_text(json.dumps({"source": MODULE.NUGET_INDEX}))
+        with self.assertRaisesRegex(MODULE.GeneratorError, "isolated source build"):
+            MODULE.collect_sources(self.packages, self.artifacts, "linux-x64", feed, "12.1.4.1")
+        metadata.write_text(json.dumps({"source": str(feed)}))
+        with self.assertRaisesRegex(MODULE.GeneratorError, "isolated source build"):
+            MODULE.collect_sources(self.packages, self.artifacts, "linux-x64", feed, "12.1.4.2")
+
+    def test_reduced_restore_requires_both_custom_packages(self) -> None:
+        with self.assertRaisesRegex(MODULE.GeneratorError, "both reduced Avalonia packages"):
+            MODULE.collect_sources(self.packages, self.artifacts, "linux-x64", self.root / "feed", "12.1.4.1")
+
     def test_rejects_global_cache_assets(self) -> None:
         self.assets["packageFolders"][str(self.root / "global-packages")] = {}
         self.write_assets()
@@ -138,7 +173,7 @@ class FeedValidationTests(unittest.TestCase):
 
 
 FAKE_DOTNET = '''#!/usr/bin/env python3
-import base64, hashlib, json, os, sys
+import base64, hashlib, json, os, sys, xml.etree.ElementTree as ET
 from pathlib import Path
 arguments = sys.argv[1:]
 pin = json.loads(Path('global.json').read_text())['sdk']
@@ -155,6 +190,8 @@ assert os.environ['NUGET_PACKAGES'] == str(packages)
 assert Path(arguments[1]).is_file()
 record = {'arguments': arguments, 'cwd': str(Path.cwd()), 'pin': pin,
           'http_cache': os.environ['NUGET_HTTP_CACHE_PATH']}
+config = ET.parse(arguments[arguments.index('--configfile') + 1]).getroot()
+record['mapped_ids'] = sorted(node.attrib['pattern'] for node in config.findall('packageSourceMapping/packageSource[@key="reduced-avalonia"]/package'))
 Path(os.environ['TEST_DOTNET_RECORD']).write_text(json.dumps(record))
 if os.environ.get('TEST_RESTORE_FAIL'):
     raise SystemExit(2)
@@ -171,6 +208,18 @@ for package in ('example', 'microsoft.netcore.app.runtime.' + runtime):
     (directory / '.nupkg.metadata').write_text(json.dumps({
         'source': 'https://api.nuget.org/v3/index.json', 'contentHash': digest}))
     libraries[package + '/' + version] = {'type': 'package'}
+local_source = config.find('packageSources/add[@key="reduced-avalonia"]')
+if local_source is not None:
+    feed = Path(local_source.attrib['value'])
+    for archive in feed.glob('*.nupkg'):
+        package = archive.name.removesuffix('.12.1.4.1.nupkg')
+        directory = packages / package / '12.1.4.1'
+        directory.mkdir(parents=True)
+        content = archive.read_bytes()
+        (directory / archive.name).write_bytes(content)
+        (directory / (archive.name + '.sha512')).write_text(base64.b64encode(hashlib.sha512(content).digest()).decode())
+        (directory / '.nupkg.metadata').write_text(json.dumps({'source': str(feed)}))
+        libraries[package + '/12.1.4.1'] = {'type': 'package'}
 assets = artifacts / 'obj' / 'app' / 'project.assets.json'
 assets.parent.mkdir(parents=True)
 assets.write_text(json.dumps({'libraries': libraries, 'packageFolders': {str(packages): {}}}))
@@ -238,6 +287,26 @@ class IsolatedRestoreTests(unittest.TestCase):
                 MODULE.generate_sources(self.source, "linux-x64", self.output)
         self.assertEqual("existing feed", self.output.read_text())
         self.assertFalse(Path(json.loads(self.record.read_text())["cwd"]).exists())
+
+    def test_reduced_restore_emits_all_official_build_inputs_but_no_custom_downloads(self) -> None:
+        lock = MODULE.PREPARE.read_lock(Path(__file__).resolve().parents[2])
+        lock_path = self.source / MODULE.PREPARE.LOCK_PATH
+        lock_path.parent.mkdir(parents=True)
+        lock_path.write_text(json.dumps(lock))
+
+        def build_local(source_root, work_dir, output, dotnet):
+            output.mkdir()
+            for identity in MODULE.PREPARE.CUSTOM_IDS:
+                (output / f"{identity}.12.1.4.1.nupkg").write_bytes(identity.encode())
+            return lock
+
+        with patch.object(MODULE.PREPARE, "prepare", side_effect=build_local):
+            self.assertEqual(5, MODULE.generate_sources(self.source, "linux-x64", self.output))
+        result = json.loads(self.output.read_text())
+        self.assertEqual(sorted(MODULE.PREPARE.CUSTOM_IDS), json.loads(self.record.read_text())["mapped_ids"])
+        for item in MODULE.PREPARE.official_sources(lock):
+            self.assertIn(item, result)
+        self.assertFalse(any("12.1.4.1" in item["url"] for item in result))
 
     def test_rejects_different_sdk_before_restore_or_output(self) -> None:
         with patch.dict(os.environ, {"TEST_DOTNET_VERSION": "10.0.203"}):

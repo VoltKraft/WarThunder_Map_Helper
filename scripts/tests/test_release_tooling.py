@@ -10,6 +10,7 @@ import os
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import github_release as release
@@ -243,7 +244,14 @@ class PublishTests(unittest.TestCase):
         (self.publish / "WarThunderMapHelper").chmod(0o755)
 
     def test_complete_payload_passes(self):
-        self.assertEqual(5, payloads.verify_publish(self.root, VERSION, "linux-arm64")["files"])
+        with patch.object(payloads, "verify_reduced_avalonia") as reduced:
+            self.assertEqual(5, payloads.verify_publish(self.root, VERSION, "linux-arm64")["files"])
+            reduced.assert_called_once_with(self.root / "src/MapHelper.Desktop/obj/project.assets.json", self.root, self.publish)
+
+    def test_framework_validation_failure_blocks_packaging(self):
+        with patch.object(payloads, "verify_reduced_avalonia", side_effect=ValueError("Original framework")):
+            with self.assertRaisesRegex(ValueError, "Original framework"):
+                payloads.verify_publish(self.root, VERSION, "linux-arm64")
 
     def test_missing_notice_fails_closed(self):
         (self.publish / "LICENSE").unlink()

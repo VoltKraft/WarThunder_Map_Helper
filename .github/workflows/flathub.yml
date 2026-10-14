@@ -62,6 +62,8 @@ jobs:
         with:
           dotnet-version: ${{ steps.source.outputs.sdk }}
 
+      # Custom Avalonia packages are rebuilt from pinned source, never downloaded
+      # from a previous pull request or substituted into official NuGet URLs.
       - name: Prepare reproducible release inputs
         env:
           SOURCE_COMMIT: ${{ steps.source.outputs.commit }}

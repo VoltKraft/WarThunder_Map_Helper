@@ -16,6 +16,7 @@ while (($#)); do
 done
 [[ "$version" == "$repo_version" ]] || { echo 'Version must match project metadata.' >&2; exit 1; }
 case "$runtime" in linux-x64|linux-arm64) ;; *) echo 'Unsupported Linux runtime.' >&2; exit 1 ;; esac
+python3 scripts/prepare_reduced_avalonia.py
 output="$PWD/artifacts/publish/$runtime-$version"
 # Only this version's generated publish directory is reset; older releases remain available.
 case "$output" in "$PWD/artifacts/publish/"*) rm -rf -- "$output" ;; *) exit 1 ;; esac
