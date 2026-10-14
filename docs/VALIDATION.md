@@ -5,6 +5,29 @@ observations. Commands are described in [Development](DEVELOPMENT.md) and
 [Distribution](DISTRIBUTION.md). Local checks do not establish successful
 GitHub Actions execution or publication to a package repository.
 
+## Release hold confirmed on 2026-10-14
+
+The maintainer chose to defer the next release until a compatible license grant
+is documented, rather than maintain a reduced Avalonia framework build.
+PR #7 remains a draft. PR #9 contained identical package changes and was closed
+as a duplicate. Do not clear the packaging gates or publish a new version on
+the basis of passing application tests alone.
+
+The follow-up review found no newer stable Avalonia release than 12.1.4 and no
+applicable additional license grant in the upstream material inspected. In
+addition to the C# components described below, seven Fluent theme templates
+retain explicit MS-PL notices, including
+[DatePicker.xaml](https://github.com/AvaloniaUI/Avalonia/blob/2d79ba55fae1b1e71c69f93a668080c9029e6a31/src/Avalonia.Themes.Fluent/Controls/DatePicker.xaml).
+The application's Fluent theme imports these resources. Simply enabling
+trimming or avoiding calendar controls has not been established as a solution.
+
+The current main CI passed all four native targets and both Flatpak builds.
+The subsequent successful Release workflow did not publish the merged
+dependency updates: its version was still the already published 0.3.0. A
+future release needs the license decision resolved first, followed by matching
+notices, regenerated feeds, version/changelog/AppStream updates, and successful
+CI for the exact main commit. No new release was created during this review.
+
 ## Avalonia update review on 2026-10-10
 
 Dependabot PR #7 proposes Avalonia 12.1.4. Its application tests pass, but the
