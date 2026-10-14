@@ -5,6 +5,30 @@ observations. Commands are described in [Development](DEVELOPMENT.md) and
 [Distribution](DISTRIBUTION.md). Local checks do not establish successful
 GitHub Actions execution or publication to a package repository.
 
+## Framework build reproducibility follow-up on 2026-10-14
+
+Release 0.3.1 was published from `4c70f0b48bb011691a1114107321f098d5247ea3`
+after all nine jobs in [main CI](https://github.com/VoltKraft/WarThunder_Map_Helper/actions/runs/38588707355)
+passed, including all four native targets, graphical smoke tests, and both
+Flatpak exports. The Linux screenshot was visually inspected.
+
+A subsequently opened test-SDK PR exposed a reproducibility defect: generated
+framework assembly information contained the enclosing application's Git
+revision. The strict provenance check rejected the resulting stale NuGet
+cache. Variant 12.1.4.2 pins that metadata to the upstream Avalonia revision
+and the bootstrap invalidates only stale private-package cache entries.
+Full builds inside and outside a Git checkout produced identical packages;
+an MSBuild regression test covers two different parent commits and no Git.
+The follow-up Release build had zero warnings/errors; all 254 application
+tests, 77 script tests (one platform skip), and 95 distribution tests passed
+locally. Platform packaging remains gated by the follow-up CI run.
+
+Microsoft.NET.Test.Sdk, TestHost, ObjectModel and CodeCoverage 18.11.0 declare
+MIT at upstream commit `36206450d47fec22e281ba9846445edc796f5080`, verified
+against their official NuGet manifests and the
+[upstream license](https://github.com/microsoft/vstest/blob/36206450d47fec22e281ba9846445edc796f5080/LICENSE).
+They are test-only dependencies and do not enter application packages.
+
 ## Reduced Avalonia candidate on 2026-10-14
 
 - Built the reduced Controls and Fluent assemblies from pinned 12.1.4 sources

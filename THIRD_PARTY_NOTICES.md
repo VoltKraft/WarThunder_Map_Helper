@@ -21,7 +21,7 @@ declared licenses, upstream sources, and the copied notice filenames.
 | Tmds.DBus.Protocol | [MIT](https://github.com/tmds/Tmds.DBus/blob/main/COPYING) | Linux desktop integration |
 
 The application uses locally rebuilt Controls and Fluent assemblies, packaged
-as `Avalonia` and `Avalonia.Themes.Fluent` 12.1.4.1. This is a project-specific
+as `Avalonia` and `Avalonia.Themes.Fluent` 12.1.4.2. This is a project-specific
 variant, not an official Avalonia release. The affected controls, templates,
 and Silverlight-derived layout transform are excluded. Upstream NOTICE is
 preserved verbatim even where it describes removed components. See

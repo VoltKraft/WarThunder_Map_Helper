@@ -5,6 +5,8 @@ import hashlib
 import importlib.util
 import io
 import json
+import os
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -73,6 +75,81 @@ class PreparationTests(unittest.TestCase):
                 with self.assertRaisesRegex(MODULE.PreparationError, message):
                     MODULE.download_verified("https://example.invalid/input", "a" * 128, destination)
             self.assertEqual([], list(self.root.iterdir()))
+
+    def private_feed(self) -> Path:
+        feed = self.root / "feed"
+        feed.mkdir()
+        for identity in MODULE.CUSTOM_IDS:
+            (feed / f"{identity}.12.1.4.2.nupkg").write_bytes(f"current {identity}".encode())
+        return feed
+
+    def test_invalidates_only_stale_current_private_packages(self) -> None:
+        feed = self.private_feed()
+        cache = self.root / "cache"
+        old = cache / "avalonia/12.1.4.2"
+        old.mkdir(parents=True)
+        (old / "avalonia.12.1.4.2.nupkg").write_bytes(b"old build")
+        matching = cache / "avalonia.themes.fluent/12.1.4.2"
+        matching.mkdir(parents=True)
+        filename = "avalonia.themes.fluent.12.1.4.2.nupkg"
+        (matching / filename).write_bytes((feed / filename).read_bytes())
+        untouched = [cache / "avalonia/12.1.4", cache / "avalonia/12.1.4.1", cache / "other/12.1.4.2"]
+        for path in untouched:
+            path.mkdir(parents=True)
+            (path / "preserve").write_bytes(b"unchanged")
+        self.assertEqual([old], MODULE.invalidate_stale_private_packages(cache, feed, "12.1.4.2"))
+        self.assertFalse(old.exists())
+        self.assertTrue((matching / filename).is_file())
+        for path in untouched:
+            self.assertEqual(b"unchanged", (path / "preserve").read_bytes())
+        self.assertEqual([], MODULE.invalidate_stale_private_packages(cache, feed, "12.1.4.2"))
+
+    def test_partial_private_cache_is_removed_but_unknown_version_is_rejected(self) -> None:
+        feed = self.private_feed()
+        cache = self.root / "cache"
+        partial = cache / "avalonia/12.1.4.2"
+        partial.mkdir(parents=True)
+        with self.assertRaisesRegex(MODULE.PreparationError, "unreviewed package version"):
+            MODULE.invalidate_stale_private_packages(cache, feed, "12.1.4.1")
+        self.assertTrue(partial.exists())
+        self.assertEqual([partial], MODULE.invalidate_stale_private_packages(cache, feed, "12.1.4.2"))
+
+    def test_linked_private_package_aborts_before_any_deletion(self) -> None:
+        feed = self.private_feed()
+        cache = self.root / "cache"
+        partial = cache / "avalonia/12.1.4.2"
+        partial.mkdir(parents=True)
+        outside = self.root / "outside"
+        outside.mkdir()
+        marker = outside / "preserve"
+        marker.write_bytes(b"unchanged")
+        parent = cache / "avalonia.themes.fluent"
+        parent.mkdir()
+        try:
+            (parent / "12.1.4.2").symlink_to(outside, target_is_directory=True)
+        except OSError:
+            self.skipTest("Symbolic links are unavailable")
+        with self.assertRaisesRegex(MODULE.PreparationError, "linked private package cache"):
+            MODULE.invalidate_stale_private_packages(cache, feed, "12.1.4.2")
+        self.assertTrue(partial.exists())
+        self.assertEqual(b"unchanged", marker.read_bytes())
+
+    def test_effective_cache_prefers_environment_then_queries_nuget(self) -> None:
+        cache = self.root / "configured"
+        with patch.dict(os.environ, {"NUGET_PACKAGES": str(cache)}), patch.object(MODULE.subprocess, "run") as run:
+            self.assertEqual(cache, MODULE.global_package_cache(self.root, "dotnet"))
+            run.assert_not_called()
+        with patch.dict(os.environ, {"NUGET_PACKAGES": ""}), patch.object(MODULE.subprocess, "run", return_value=
+                subprocess.CompletedProcess([], 0, f"global-packages: {cache}\n", "")) as run:
+            self.assertEqual(cache, MODULE.global_package_cache(self.root, "dotnet"))
+            self.assertIn("--force-english-output", run.call_args.args[0])
+            self.assertNotIn("--clear", run.call_args.args[0])
+
+    def test_cache_discovery_failure_does_not_guess_a_directory(self) -> None:
+        with patch.dict(os.environ, {"NUGET_PACKAGES": ""}), patch.object(MODULE.subprocess, "run", return_value=
+                subprocess.CompletedProcess([], 1, "", "failure")):
+            with self.assertRaisesRegex(MODULE.PreparationError, "effective NuGet"):
+                MODULE.global_package_cache(self.root, "dotnet")
 
 
 if __name__ == "__main__":

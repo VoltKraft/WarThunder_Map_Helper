@@ -89,7 +89,7 @@ def reduce_sources(source: Path, removal: dict) -> None:
                 raise ValueError(f'Unexpected MS-PL source remains: {path}')
 
 
-def write_project(work: Path, source: Path, packages: Path, name: str) -> Path:
+def write_project(work: Path, source: Path, packages: Path, name: str, manifest: dict) -> Path:
     directory = work / name
     directory.mkdir()
     official = packages / 'Avalonia'
@@ -108,11 +108,15 @@ def write_project(work: Path, source: Path, packages: Path, name: str) -> Path:
     # Explicit empty boundaries prevent inheriting this application's build props.
     for file in ('Directory.Build.props', 'Directory.Build.targets'):
         (directory / file).write_text('<Project/>\n', encoding='utf-8')
+    # The SDK otherwise discovers the enclosing application Git repository and
+    # appends its HEAD to assembly metadata, changing identical upstream builds.
+    upstream_version = escape(manifest['upstreamVersion'])
+    upstream_commit = escape(manifest['upstreamCommit'])
     project = directory / f'{name}.csproj'
     project.write_text(f'''<Project Sdk="Microsoft.NET.Sdk">
 <PropertyGroup>
 <TargetFramework>net10.0</TargetFramework><AssemblyName>{name}</AssemblyName><RootNamespace>{name}</RootNamespace>
-<EnableDefaultCompileItems>false</EnableDefaultCompileItems><Nullable>enable</Nullable><Version>12.1.4</Version><LangVersion>14.0</LangVersion>
+<EnableDefaultCompileItems>false</EnableDefaultCompileItems><Nullable>enable</Nullable><Version>{upstream_version}</Version><SourceRevisionId>{upstream_commit}</SourceRevisionId><IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion><InformationalVersion>{upstream_version}+{upstream_commit}</InformationalVersion><LangVersion>14.0</LangVersion>
 <EnableNETAnalyzers>false</EnableNETAnalyzers><GenerateDocumentationFile>true</GenerateDocumentationFile><NoWarn>CS1591</NoWarn>
 <SignAssembly>true</SignAssembly><DelaySign>true</DelaySign><AssemblyOriginatorKeyFile>{escape(str(source))}/build/avalonia.snk</AssemblyOriginatorKeyFile>
 <PathMap>{escape(str(work))}=/_/avalonia-reduced</PathMap><Deterministic>true</Deterministic><DebugType>none</DebugType><DebugSymbols>false</DebugSymbols><NuGetAudit>false</NuGetAudit>
@@ -217,7 +221,7 @@ def build(source_archive: Path, upstream_packages: Path, output: Path,
     config.write_text('<configuration><packageSources><clear/></packageSources><fallbackPackageFolders><clear/></fallbackPackageFolders></configuration>', encoding='utf-8')
     env = dict(os.environ, DOTNET_CLI_TELEMETRY_OPTOUT='1', DOTNET_SKIP_FIRST_TIME_EXPERIENCE='1')
     for name in ('Avalonia.Controls', 'Avalonia.Themes.Fluent'):
-        project = write_project(work, source, packages, name)
+        project = write_project(work, source, packages, name, manifest)
         subprocess.run([dotnet, 'build', str(project), '-c', 'Release', '-m:1',
                         '--configfile', str(config), '-p:UseSharedCompilation=false'],
                        cwd=work, env=env, check=True)

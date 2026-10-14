@@ -17,6 +17,16 @@
       "WindowsCommunityToolkit-LICENSE.txt",
       "Folio-LineBreak-LICENSE.txt",
       "Folio-UnicodeTrie-LICENSE.txt"
+    ],
+    "12.1.4.2": [
+      "Avalonia-LICENSE.md",
+      "Avalonia-NOTICE.md",
+      "HandyControl-LICENSE.txt",
+      "SixLabors-Fonts-LICENSE.txt",
+      "LottieSharp-LICENSE.txt",
+      "WindowsCommunityToolkit-LICENSE.txt",
+      "Folio-LineBreak-LICENSE.txt",
+      "Folio-UnicodeTrie-LICENSE.txt"
     ]
   },
   "avalonia.buildservices": {
@@ -116,6 +126,10 @@
       "Avalonia-NOTICE.md"
     ],
     "12.1.4.1": [
+      "Avalonia-LICENSE.md",
+      "Avalonia-NOTICE.md"
+    ],
+    "12.1.4.2": [
       "Avalonia-LICENSE.md",
       "Avalonia-NOTICE.md"
     ]

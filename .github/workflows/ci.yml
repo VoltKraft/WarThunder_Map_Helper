@@ -33,6 +33,9 @@ jobs:
       - name: Validate release metadata
         id: version
         run: python3 scripts/release_metadata.py --github-output "$GITHUB_OUTPUT"
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
       - name: Test release tooling
         run: python3 -m unittest discover -s scripts/tests -p 'test_*.py' -v
       - name: Test distribution tooling
@@ -65,11 +68,15 @@ jobs:
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
-            ${{ env.NUGET_PACKAGES }}
-            !${{ env.NUGET_PACKAGES }}/avalonia/12.1.4.1
-            !${{ env.NUGET_PACKAGES }}/avalonia.themes.fluent/12.1.4.1
-          key: nuget-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('global.json', 'NuGet.Config', 'Directory.Build.props', '**/*.csproj', '**/*.wixproj', '**/packages.lock.json', 'packaging/avalonia-reduced/**', 'scripts/build_reduced_avalonia.py') }}
-          restore-keys: nuget-${{ runner.os }}-${{ runner.arch }}-
+            ${{ env.NUGET_PACKAGES }}/*
+            !${{ env.NUGET_PACKAGES }}/avalonia
+            !${{ env.NUGET_PACKAGES }}/avalonia/**
+            !${{ env.NUGET_PACKAGES }}/avalonia.themes.fluent
+            !${{ env.NUGET_PACKAGES }}/avalonia.themes.fluent/**
+          # Cache individual upstream package directories. Archiving their
+          # parent recursively would retain excluded private package children.
+          key: nuget-official-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('global.json', 'NuGet.Config', 'Directory.Build.props', '**/*.csproj', '**/*.wixproj', '**/packages.lock.json', 'packaging/avalonia-reduced/**', 'scripts/build_reduced_avalonia.py', 'scripts/prepare_reduced_avalonia.py') }}
+          restore-keys: nuget-official-v2-${{ runner.os }}-${{ runner.arch }}-
       - name: Install Linux display dependencies
         if: runner.os == 'Linux'
         run: |
