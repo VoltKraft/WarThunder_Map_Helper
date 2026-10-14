@@ -2,14 +2,16 @@
 """Download verified framework build inputs and invoke the offline source builder.
 
 The checked-in input lock is the only download authority. Outputs are local
-packages, never upstream package replacements in the global NuGet cache. Run
-before restoring the application; Flatpak invokes the same builder offline.
+packages, never upstream package replacements in the global NuGet cache. The
+CLI removes only stale cache entries for the two current private package
+identities before restore; Flatpak invokes the same builder offline.
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -32,7 +34,7 @@ class PreparationError(ValueError):
 def read_lock(source_root: Path) -> dict:
     """Validate the narrow immutable upstream archive and official package set."""
     lock = json.loads((source_root / LOCK_PATH).read_text(encoding="utf-8"))
-    if lock.get("schemaVersion") != 1 or lock.get("upstreamVersion") != "12.1.4" or lock.get("packageVersion") != "12.1.4.1":
+    if lock.get("schemaVersion") != 1 or lock.get("upstreamVersion") != "12.1.4" or lock.get("packageVersion") != "12.1.4.2":
         raise PreparationError("Unreviewed reduced Avalonia package version")
     source = lock.get("source", {})
     if source.get("filename") != "avalonia-source.tar.gz" or not re.fullmatch(
@@ -103,6 +105,63 @@ def official_sources(lock: dict) -> list[dict[str, str]]:
     } for item in lock["packages"]]
 
 
+def global_package_cache(source_root: Path, dotnet: str) -> Path:
+    """Resolve NuGet's effective package cache without clearing any cache scope."""
+    configured = os.environ.get("NUGET_PACKAGES")
+    if configured:
+        path = Path(configured).expanduser()
+        return (path if path.is_absolute() else source_root / path).resolve()
+    result = subprocess.run(
+        [dotnet, "nuget", "locals", "global-packages", "--list", "--force-english-output"],
+        cwd=source_root, capture_output=True, text=True, timeout=30,
+    )
+    prefix = "global-packages: "
+    paths = [line[len(prefix):].strip() for line in result.stdout.splitlines() if line.startswith(prefix)]
+    if result.returncode or len(paths) != 1 or not Path(paths[0]).is_absolute():
+        raise PreparationError("Could not determine the effective NuGet global-packages directory")
+    return Path(paths[0]).resolve()
+
+
+def invalidate_stale_private_packages(cache: Path, feed: Path, version: str) -> list[Path]:
+    """Remove only mismatching current private package directories before restore.
+
+    Matching archives and every other package/version remain untouched. This is
+    necessary because NuGet reuses cached identities without consulting a newly
+    rebuilt local feed. Call only after the complete source build succeeds and
+    before starting a restore; concurrent restores in this cache are unsupported.
+    """
+    if version != "12.1.4.2":
+        raise PreparationError("Refusing cache invalidation for an unreviewed package version")
+    cache = cache.resolve()
+    stale = []
+    for identity in sorted(CUSTOM_IDS):
+        filename = f"{identity}.{version}.nupkg"
+        built = feed / filename
+        if built.is_symlink() or not built.is_file():
+            raise PreparationError(f"Reduced package was not produced: {filename}")
+        directory = cache / identity / version
+        if directory.is_symlink() or directory.resolve() != directory:
+            raise PreparationError(f"Refusing linked private package cache path: {directory}")
+        if not directory.exists():
+            continue
+        if not directory.is_dir():
+            raise PreparationError(f"Private package cache entry is not a directory: {directory}")
+        cached = directory / filename
+        if cached.is_symlink():
+            raise PreparationError(f"Refusing linked private package archive: {cached}")
+        matches = False
+        if cached.is_file():
+            with cached.open("rb") as old, built.open("rb") as new:
+                matches = hashlib.file_digest(old, "sha512").digest() == hashlib.file_digest(new, "sha512").digest()
+        if not matches:
+            stale.append(directory)
+    # Validate both candidates before making any bounded deletions.
+    for directory in stale:
+        shutil.rmtree(directory)
+        print(f"Removed stale private NuGet cache entry: {directory}")
+    return stale
+
+
 def prepare(source_root: Path, work_dir: Path, output: Path, dotnet: str = "dotnet") -> dict:
     """Verify source inputs, build the two local packages, and return their lock."""
     source_root, work_dir, output = source_root.resolve(), work_dir.resolve(), output.resolve()
@@ -139,9 +198,10 @@ def main() -> int:
     args = parser.parse_args()
     root = args.source_root.resolve()
     try:
-        prepare(root, args.work_dir or root / ".build-cache/reduced-avalonia",
-                args.output or root / ".build-cache/reduced-avalonia/feed", args.dotnet)
-    except (PreparationError, OSError, ValueError) as exc:
+        output = args.output or root / ".build-cache/reduced-avalonia/feed"
+        lock = prepare(root, args.work_dir or root / ".build-cache/reduced-avalonia", output, args.dotnet)
+        invalidate_stale_private_packages(global_package_cache(root, args.dotnet), output, lock["packageVersion"])
+    except (PreparationError, OSError, ValueError, subprocess.SubprocessError) as exc:
         print(f"Reduced Avalonia preparation failed: {exc}", file=sys.stderr)
         return 1
     return 0

@@ -30,7 +30,7 @@ class ReducedPayloadTests(unittest.TestCase):
         checksum = "b" * 128
         lock = {
             "schemaVersion": 1, "upstreamCommit": commit,
-            "upstreamVersion": "12.1.4", "packageVersion": "12.1.4.1",
+            "upstreamVersion": "12.1.4", "packageVersion": "12.1.4.2",
             "source": {"filename": "avalonia-source.tar.gz", "sha512": checksum,
                        "url": f"https://codeload.github.com/AvaloniaUI/Avalonia/tar.gz/{commit}"},
             "packages": [{"id": name, "version": "12.1.4", "sha512": checksum,
@@ -46,7 +46,7 @@ class ReducedPayloadTests(unittest.TestCase):
         self.feed.mkdir(parents=True)
         self.libraries = {}
         for name, filename in ASSEMBLIES.items():
-            identity = name + "/12.1.4.1"
+            identity = name + "/12.1.4.2"
             self.libraries[identity] = {"type": "package"}
             package = self.cache / identity
             binary = package / "lib/net10.0" / filename
@@ -54,11 +54,11 @@ class ReducedPayloadTests(unittest.TestCase):
             content = b"test reduced bytes for " + filename.encode()
             binary.write_bytes(content)
             (self.publish / filename).write_bytes(content)
-            archive_name = f"{name}.12.1.4.1.nupkg"
+            archive_name = f"{name}.12.1.4.2.nupkg"
             (package / archive_name).write_bytes(content)
             (self.feed / archive_name).write_bytes(content)
             (package / "reduced-avalonia.json").write_text(json.dumps({
-                "schemaVersion": 1, "upstreamCommit": commit, "packageVersion": "12.1.4.1",
+                "schemaVersion": 1, "upstreamCommit": commit, "packageVersion": "12.1.4.2",
                 "sourceArchiveSha512": checksum,
                 "assemblies": {filename: hashlib.sha256(content).hexdigest()},
                 "removedSources": [], "modifiedSources": [],
@@ -76,7 +76,7 @@ class ReducedPayloadTests(unittest.TestCase):
         self.metadata_audit.assert_called_once_with([self.publish])
 
     def test_original_package_version_is_rejected(self):
-        self.libraries["avalonia/12.1.4"] = self.libraries.pop("avalonia/12.1.4.1")
+        self.libraries["avalonia/12.1.4"] = self.libraries.pop("avalonia/12.1.4.2")
         self.write_assets()
         with self.assertRaisesRegex(ValueError, "reduced package is required"):
             verify(self.assets, self.root)
@@ -94,20 +94,20 @@ class ReducedPayloadTests(unittest.TestCase):
             verify(self.assets, self.root, self.publish)
 
     def test_original_fallback_framework_is_rejected(self):
-        extra = self.cache / "avalonia/12.1.4.1/lib/net8.0/Avalonia.Controls.dll"
+        extra = self.cache / "avalonia/12.1.4.2/lib/net8.0/Avalonia.Controls.dll"
         extra.parent.mkdir()
         extra.write_bytes(b"original DLL")
         with self.assertRaisesRegex(ValueError, "framework copies"):
             verify(self.assets, self.root)
 
     def test_changed_restored_dll_is_rejected(self):
-        binary = self.cache / "avalonia/12.1.4.1/lib/net10.0/Avalonia.Controls.dll"
+        binary = self.cache / "avalonia/12.1.4.2/lib/net10.0/Avalonia.Controls.dll"
         binary.write_bytes(b"tampered DLL")
         with self.assertRaisesRegex(ValueError, "Restored reduced assembly checksum"):
             verify(self.assets, self.root)
 
     def test_different_source_revision_is_rejected(self):
-        path = self.cache / "avalonia/12.1.4.1/reduced-avalonia.json"
+        path = self.cache / "avalonia/12.1.4.2/reduced-avalonia.json"
         data = json.loads(path.read_text())
         data["upstreamCommit"] = "c" * 40
         path.write_text(json.dumps(data))
@@ -115,7 +115,7 @@ class ReducedPayloadTests(unittest.TestCase):
             verify(self.assets, self.root)
 
     def test_stale_package_cache_is_rejected_after_rebuild(self):
-        (self.feed / "avalonia.12.1.4.1.nupkg").write_bytes(b"new build")
+        (self.feed / "avalonia.12.1.4.2.nupkg").write_bytes(b"new build")
         with self.assertRaisesRegex(ValueError, "Stale package cache"):
             verify(self.assets, self.root)
 

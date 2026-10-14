@@ -21,8 +21,17 @@ render transform. Ordinary untransformed application popups retain their
 layout; transformed popup measurement is not a supported feature of this
 variant. The application does not use transformed popup content.
 
+Variant 12.1.4.2 pins assembly informational metadata to the upstream Avalonia
+revision. Variant 12.1.4.1 inherited the enclosing application's Git revision,
+so packages could differ across commits despite unchanged framework sources.
+The bootstrap rebuilds first and removes only stale cached copies of the two
+current private package versions before restore. The final-byte checks remain
+mandatory. The historical application release 0.3.1 is not overwritten.
+Do not run preparation concurrently with a restore that uses the same NuGet
+cache. Unrelated packages and older private versions are not removed.
+
 Only the `Avalonia` and `Avalonia.Themes.Fluent` packages are reconstructed.
-Their local version `12.1.4.1` identifies this project's variant, not an official
+Their local version `12.1.4.2` identifies this project's variant, not an official
 Avalonia release. The root package retains reviewed upstream assemblies and
 build tooling, while its Controls assembly and the Fluent theme are rebuilt
 from the pinned source. Unsupported target frameworks and original copies of
@@ -57,7 +66,7 @@ and generated package provenance record the changes separately.
 Avalonia updates require a fresh source-level review, regeneration of the
 reduced packages and offline feed, UI interaction tests, and native packaging
 checks. Do not advance the package pins solely because upstream NuGet metadata
-declares MIT. Do not reuse `12.1.4.1` for a different upstream revision or a
+declares MIT. Do not reuse `12.1.4.2` for a different upstream revision or a
 changed released variant; allocate a new local package version and record the
 new inputs instead.
 

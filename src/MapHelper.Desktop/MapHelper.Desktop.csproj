@@ -3,9 +3,9 @@
   <ItemGroup>
     <ProjectReference Include="../MapHelper.Core/MapHelper.Core.csproj" />
     <ProjectReference Include="../MapHelper.Telemetry/MapHelper.Telemetry.csproj" />
-    <PackageReference Include="Avalonia" Version="[12.1.4.1]" />
+    <PackageReference Include="Avalonia" Version="[12.1.4.2]" />
     <PackageReference Include="Avalonia.Desktop" Version="12.1.4" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="[12.1.4.1]" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="[12.1.4.2]" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.4" />
     <PackageReference Include="Avalonia.BuildServices" Version="11.3.2" ExcludeAssets="all" PrivateAssets="all" />
     <PackageReference Include="SkiaSharp" Version="4.153.1" />

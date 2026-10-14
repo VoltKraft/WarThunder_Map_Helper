@@ -1,6 +1,10 @@
 """Regression tests for the private reduced-Avalonia package builder."""
 import importlib.util
 import json
+import os
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 import tarfile
 import tempfile
@@ -8,12 +12,52 @@ import unittest
 import zipfile
 
 MODULE_PATH = Path(__file__).resolve().parents[1] / 'build_reduced_avalonia.py'
+sys.path.insert(0, str(MODULE_PATH.parent))
 SPEC = importlib.util.spec_from_file_location('build_reduced_avalonia', MODULE_PATH)
 builder = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(builder)
 
 
 class ReducedAvaloniaBuildTests(unittest.TestCase):
+    def test_assembly_metadata_ignores_enclosing_git_history(self):
+        sdk = json.loads((builder.ROOT / 'global.json').read_text())
+        executable = 'dotnet.exe' if os.name == 'nt' else 'dotnet'
+        local_sdk = builder.ROOT / '.build-cache' / f"sdk-{sdk['sdk']['version']}" / executable
+        dotnet = shutil.which('dotnet') or (str(local_sdk) if local_sdk.exists() else None)
+        if not dotnet or not shutil.which('git'):
+            self.skipTest('The pinned .NET SDK and Git are required for the metadata regression test')
+        manifest = json.loads(builder.MANIFEST.read_text())
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'global.json').write_text(json.dumps(sdk))
+            source = root / 'source'
+            (source / 'build').mkdir(parents=True)
+            (source / 'build/AvaloniaPublicKey.props').write_text('<Project/>')
+            upstream_project = source / 'src/Avalonia.Controls/Avalonia.Controls.csproj'
+            upstream_project.parent.mkdir(parents=True)
+            upstream_project.write_text('<Project/>')
+            project = builder.write_project(root, source, root / 'packages',
+                                            'Avalonia.Controls', manifest)
+
+            def metadata_version():
+                result = subprocess.check_output(
+                    [dotnet, 'msbuild', str(project), '-target:GetAssemblyAttributes',
+                     '-getItem:AssemblyAttribute', '-nologo'], cwd=root, text=True)
+                attributes = json.loads(result)['Items']['AssemblyAttribute']
+                return next(attribute['_Parameter1'] for attribute in attributes
+                            if attribute['Identity'] == 'System.Reflection.AssemblyInformationalVersionAttribute')
+
+            versions = [metadata_version()]
+            subprocess.run(['git', 'init', str(root)], check=True, capture_output=True)
+            for message in ('first unrelated application commit', 'second unrelated application commit'):
+                subprocess.run(['git', '-C', str(root), '-c', 'user.name=Build regression test',
+                                '-c', 'user.email=build-test@example.invalid', '-c', 'commit.gpgsign=false',
+                                '-c', f'core.hooksPath={root / "empty-hooks"}', 'commit', '--allow-empty',
+                                '-m', message], check=True, capture_output=True)
+                versions.append(metadata_version())
+            expected = f"{manifest['upstreamVersion']}+{manifest['upstreamCommit']}"
+            self.assertEqual(versions, [expected, expected, expected])
+
     def test_corrupted_input_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'input.nupkg'
