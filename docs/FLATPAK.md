@@ -42,6 +42,13 @@ directory. Each build command starts a separate sandbox, so the default home
 cache would disappear before the license gate reads the restored package graph.
 This build-only cache is excluded from local source copies and the exported app.
 
+The two [reduced Avalonia packages](REDUCED_AVALONIA.md) are generated from
+source during both feed preparation and the sandbox build. The download list
+contains their original official compiler inputs; it does not download custom
+prebuilt packages. A separate SHA-512-pinned source archive supplies the
+framework sources. Local package provenance and the final published DLL hashes
+are checked before export.
+
 ## Build and install locally
 
 On a Linux machine of the architecture being tested, install Flatpak and

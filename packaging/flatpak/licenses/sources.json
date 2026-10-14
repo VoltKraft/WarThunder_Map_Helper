@@ -1,10 +1,10 @@
 {
   "Avalonia-LICENSE.md": {
-    "url": "https://raw.githubusercontent.com/AvaloniaUI/Avalonia/8eeda4f6f546165b3f72e63c9f42247abb306905/licence.md",
+    "url": "https://raw.githubusercontent.com/AvaloniaUI/Avalonia/2d79ba55fae1b1e71c69f93a668080c9029e6a31/licence.md",
     "sha256": "213814d306090074d234d760239ff0f67eb9b8d20eefb4d5631bb39dbe0b769b"
   },
   "Avalonia-NOTICE.md": {
-    "url": "https://raw.githubusercontent.com/AvaloniaUI/Avalonia/8eeda4f6f546165b3f72e63c9f42247abb306905/NOTICE.md",
+    "url": "https://raw.githubusercontent.com/AvaloniaUI/Avalonia/2d79ba55fae1b1e71c69f93a668080c9029e6a31/NOTICE.md",
     "sha256": "dd6f80852d16320c865a2e403ffd1a8b07a0e34c5b37122c0bc2343639ff68e6"
   },
   "Avalonia.BuildServices-LICENSE.txt": {
@@ -22,5 +22,29 @@
   "Inter-OFL.txt": {
     "url": "https://raw.githubusercontent.com/rsms/inter/0a5106e0bde18df09374066bf3a7998e3546307d/LICENSE.txt",
     "sha256": "4d7d9c95e7d7f2f0ebf76d5e0b344826b74e903a34028ee18ab54bb639e45906"
+  },
+  "HandyControl-LICENSE.txt": {
+    "url": "https://raw.githubusercontent.com/HandyOrg/HandyControl/557bb8c285d3176ecde2c6d2a8403837672e0c9a/LICENSE",
+    "sha256": "f8ab739ec73d639fd941a399b4cdcc7673838887481314f5c2f8e42eb8585003"
+  },
+  "SixLabors-Fonts-LICENSE.txt": {
+    "url": "https://raw.githubusercontent.com/SixLabors/Fonts/034a440aece357341fcc6b02db58ffbe153e54ef/LICENSE",
+    "sha256": "f38dc2765451fd2b19d7e0f47ed655f3a1cb889b28341ea6266efd75d8425a6f"
+  },
+  "LottieSharp-LICENSE.txt": {
+    "url": "https://raw.githubusercontent.com/quicoli/LottieSharp/80d9cf27ccd234d2b23c523f1ad2b0ea2432f07c/LICENSE",
+    "sha256": "f6b84f94878ea0832c5876a583a78da654414d960dc9fc3fc6d2e2034196240f"
+  },
+  "WindowsCommunityToolkit-LICENSE.txt": {
+    "url": "https://raw.githubusercontent.com/CommunityToolkit/WindowsCommunityToolkit/c8f76d072df53d3622fb5440d63afb06cb9e7a10/License.md",
+    "sha256": "134aa3b1d2c509dcf57196ccaa7b69db0eb9ae34fa9189c3d683c02d9923175d"
+  },
+  "Folio-LineBreak-LICENSE.txt": {
+    "url": "https://raw.githubusercontent.com/foliojs/linebreak/dc9603e8e58ce0e6d431cc5087ffb98132cc6a07/LICENSE",
+    "sha256": "cf22b8198f0886a8d4626121579114f23141070e1fceab02ab3c1c361e163440"
+  },
+  "Folio-UnicodeTrie-LICENSE.txt": {
+    "url": "https://raw.githubusercontent.com/foliojs/unicode-trie/b0f97b95700c59ea742bfad532b30393b1bd6ea3/LICENSE",
+    "sha256": "43439dbd4f43837aadab215cdbe5a422cc6323a50c4ea84d8d6bbc3671666a1d"
   }
 }

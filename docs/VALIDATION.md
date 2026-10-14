@@ -5,7 +5,34 @@ observations. Commands are described in [Development](DEVELOPMENT.md) and
 [Distribution](DISTRIBUTION.md). Local checks do not establish successful
 GitHub Actions execution or publication to a package repository.
 
+## Reduced Avalonia candidate on 2026-10-14
+
+- Built the reduced Controls and Fluent assemblies from pinned 12.1.4 sources
+  with zero warnings or errors. Removed 45 source/resource files and adapted
+  four resource files; retained upstream license texts unchanged.
+- Rebuilt both local NuGet packages in different-length work directories and
+  obtained byte-identical archives. The exact SDK and source/compiler-input
+  hashes are verified before compilation.
+- Release application build passed without warnings. All 254 tests passed:
+  177 logic/integration and 77 UI tests, including removed-type checks,
+  missing date/time templates, and existing dropdown interaction coverage.
+- Both isolated offline-feed generators succeeded. The merged feed contains
+  30 official NuGet compiler/runtime inputs; reduced packages are compiled
+  inside the Flatpak sandbox rather than downloaded as binaries.
+- Native Linux x64 publishing passed architecture, notice collection, and
+  reduced-DLL provenance/checksum validation (312 files). No local graphical
+  smoke test was run because this environment has no display or Xvfb.
+- Windows, ARM64, and real Flatpak sandbox validation are required in CI
+  before publication. These local results do not establish a published release.
+
+See [Reduced Avalonia](REDUCED_AVALONIA.md) for the maintained variant and its
+limitations, including transformed popup layout and unsupported controls.
+
 ## Release hold confirmed on 2026-10-14
+
+This earlier decision was superseded by the maintainer's subsequent choice to
+remove or replace the affected components. The implementation and its release
+conditions are described in [Reduced Avalonia](REDUCED_AVALONIA.md).
 
 The maintainer chose to defer the next release until a compatible license grant
 is documented, rather than maintain a reduced Avalonia framework build.

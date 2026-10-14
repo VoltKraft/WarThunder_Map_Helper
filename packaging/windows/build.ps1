@@ -13,6 +13,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Release metadata validation failed.' }
     if ([string]::IsNullOrWhiteSpace($Version)) { $Version = $repoVersion.Trim() }
     if ($Version -cne $repoVersion.Trim()) { throw 'Version must match Directory.Build.props and CHANGELOG.md.' }
+    & $Python scripts/prepare_reduced_avalonia.py
+    if ($LASTEXITCODE -ne 0) { throw 'Reduced Avalonia source preparation failed.' }
     $release = Join-Path $projectRoot 'artifacts\release'
     $publishRoot = [IO.Path]::GetFullPath((Join-Path $projectRoot 'artifacts\publish'))
     $publish = [IO.Path]::GetFullPath((Join-Path $publishRoot "$Runtime-$Version"))

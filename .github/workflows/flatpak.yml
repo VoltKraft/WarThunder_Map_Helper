@@ -44,6 +44,8 @@ jobs:
         with:
           dotnet-version: ${{ steps.source.outputs.sdk }}
 
+      # The generator builds custom packages only to resolve the graph. Its
+      # feed lists verified official compiler inputs; Flatpak rebuilds offline.
       - name: Regenerate and check both offline NuGet feeds
         run: |
           python3 source/tools/generate-flatpak-nuget-sources.py --source-root source --runtime linux-x64 --output nuget-x64.json

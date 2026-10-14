@@ -57,6 +57,7 @@ limitations that depend on the game mode and available fields. See
 Install the .NET 10 SDK selected by `global.json`, then run:
 
 ```text
+python scripts/prepare_reduced_avalonia.py
 dotnet restore WarThunderMapHelper.slnx
 dotnet build WarThunderMapHelper.slnx -c Release --no-restore
 dotnet test WarThunderMapHelper.slnx -c Release --no-build
