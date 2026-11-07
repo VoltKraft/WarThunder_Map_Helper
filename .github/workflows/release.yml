@@ -147,9 +147,10 @@ jobs:
             submit: 'true'
           - workflow: flathub.yml
             submit: 'false'
+          - workflow: flatpak-pages.yml
     steps:
       # GITHUB_TOKEN-created releases do not trigger a second release event workflow.
-      - name: Trigger store preparation explicitly
+      - name: Trigger distribution explicitly
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
@@ -157,7 +158,9 @@ jobs:
           SUBMIT: ${{ matrix.submit }}
         with:
           script: |
+            const inputs = { release_tag: process.env.RELEASE_TAG };
+            if (process.env.SUBMIT) inputs.submit = process.env.SUBMIT;
             await github.rest.actions.createWorkflowDispatch({
               ...context.repo, workflow_id: process.env.WORKFLOW, ref: 'main',
-              inputs: { release_tag: process.env.RELEASE_TAG, submit: process.env.SUBMIT }
+              inputs
             });

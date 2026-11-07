@@ -7,6 +7,8 @@ Application ID: `io.github.voltkraft.WarThunder_Map_Helper`.
 - `flathub/nuget-sources.json` is the generated, hash-pinned offline NuGet feed.
 - The desktop entry, AppStream metadata, and 512px icon use the same app ID.
 - `licenses/` contains exact-version upstream supplements.
+- `repository-signing-key.asc` is the public trust anchor for the signed
+  [GitHub Pages update repository](../../docs/DISTRIBUTION.md#github-pages-flatpak-repository).
 
 See [Flatpak builds](../../docs/FLATPAK.md) for reproducible local builds and
 [distribution](../../docs/DISTRIBUTION.md#flathub) for the Flathub policy boundary.

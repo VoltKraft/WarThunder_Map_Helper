@@ -23,9 +23,12 @@ Windows MSI and Linux Flatpak packages include the .NET runtime.
 
 - **Windows:** install the MSI for your architecture. It installs for the
   current user and creates Start Menu and desktop shortcuts.
-- **Linux:** install the Flatpak bundle using the instructions in
-  [Distribution](docs/DISTRIBUTION.md). WinGet and Flathub availability and
-  initial submission requirements are documented there.
+- **Linux:** [install with Flatpak](https://voltkraft.github.io/WarThunder_Map_Helper/io.github.voltkraft.WarThunder_Map_Helper.flatpakref)
+  from the signed [repository](https://voltkraft.github.io/WarThunder_Map_Helper/)
+  for updates through `flatpak update`, or download a release bundle.
+  See [Flatpak installation](docs/FLATPAK.md#install-from-the-update-repository).
+  WinGet and Flathub availability are documented in
+  [Distribution](docs/DISTRIBUTION.md).
 
 Start War Thunder normally and enter a battle or test flight. Use **Connection**
 to change the endpoint when the game runs on another machine. Use **Demo** to

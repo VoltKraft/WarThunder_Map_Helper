@@ -1,0 +1,133 @@
+name: Flatpak repository on GitHub Pages
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Latest published stable release (leave empty to select it automatically)
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+# Serialize build and deployment together; an older dispatch must never replace
+# a newer repository. The builder also rejects non-latest release tags.
+concurrency:
+  group: flatpak-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.repository == 'VoltKraft/WarThunder_Map_Helper' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pages: read
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      page_url: ${{ steps.pages.outputs.url }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Read the configured Pages URL
+        id: pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          url=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq 'select(.build_type == "workflow") | .html_url')
+          test -n "$url" || { echo "Enable GitHub Pages with GitHub Actions as its source." >&2; exit 1; }
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Install repository tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes flatpak ostree gnupg
+
+      - name: Import the repository signing key
+        env:
+          FLATPAK_GPG_PRIVATE_KEY: ${{ secrets.FLATPAK_GPG_PRIVATE_KEY }}
+        run: |
+          test -n "$FLATPAK_GPG_PRIVATE_KEY" || { echo "Configure FLATPAK_GPG_PRIVATE_KEY before publishing." >&2; exit 1; }
+          export GNUPGHOME="$RUNNER_TEMP/flatpak-gnupg"
+          install -d -m 700 "$GNUPGHOME"
+          echo "GNUPGHOME=$GNUPGHOME" >> "$GITHUB_ENV"
+          printf '%s\n' "$FLATPAK_GPG_PRIVATE_KEY" | gpg --batch --import
+
+      - name: Verify released bundles and build the signed repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          PAGES_URL: ${{ steps.pages.outputs.url }}
+        run: |
+          python3 scripts/flatpak_pages.py \
+            --repository "$GITHUB_REPOSITORY" \
+            --release-tag "$RELEASE_TAG" \
+            --base-url "$PAGES_URL" \
+            --public-key packaging/flatpak/repository-signing-key.asc \
+            --output-dir artifacts/flatpak-pages
+
+      - name: Verify signed downloads with Flatpak on both architectures
+        run: |
+          export FLATPAK_USER_DIR="$RUNNER_TEMP/flatpak-check"
+          export XDG_CACHE_HOME="$RUNNER_TEMP/flatpak-check-cache"
+          trap 'rm -rf -- "$FLATPAK_USER_DIR" "$XDG_CACHE_HOME"' EXIT
+          flatpak remote-add --user \
+            --gpg-import="$GITHUB_WORKSPACE/artifacts/flatpak-pages/repository-signing-key.gpg" \
+            repository-check "file://$GITHUB_WORKSPACE/artifacts/flatpak-pages/repo/"
+          for arch in x86_64 aarch64; do
+            flatpak remote-info --user --arch="$arch" \
+              repository-check io.github.voltkraft.WarThunder_Map_Helper//stable
+            flatpak install --user --noninteractive --assumeyes \
+              --no-deps --no-related --no-deploy --arch="$arch" \
+              repository-check io.github.voltkraft.WarThunder_Map_Helper//stable
+          done
+
+      - name: Archive the Pages deployment
+        run: |
+          tar --dereference --hard-dereference \
+            --directory artifacts/flatpak-pages \
+            --create --file "$RUNNER_TEMP/artifact.tar" .
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        id: upload
+        with:
+          name: github-pages
+          path: ${{ runner.temp }}/artifact.tar
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+          archive: true
+
+      - name: Remove the temporary signing key
+        if: always()
+        run: |
+          gpgconf --homedir "$RUNNER_TEMP/flatpak-gnupg" --kill all || true
+          rm -rf -- "$RUNNER_TEMP/flatpak-gnupg"
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ needs.build.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Deploy and await the Pages result
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PAGES_ARTIFACT_ID: ${{ needs.build.outputs.artifact_id }}
+        with:
+          script: |
+            await require('./scripts/deploy_pages.cjs')({ github, context, core });

@@ -8,6 +8,15 @@ Both specifications were checked on their official websites for this update.
 
 ## [Unreleased]
 
+### Added
+
+- Signed Flatpak update repository on GitHub Pages for Linux x86_64 and ARM64,
+  with `.flatpakref` installation and `.flatpakrepo` remote setup alongside
+  the existing GitHub Release bundles.
+- Release-triggered Pages deployment from verified published bundle digests,
+  with a persistent signing identity, stale-version rejection, bounded repository
+  size, and retention of the preceding release's objects.
+
 ## [0.3.2] - 2026-10-14
 
 ### Fixed

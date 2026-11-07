@@ -68,11 +68,113 @@ separate install folder and product identity. Both architectures use the same
 default profile; avoid running them concurrently against that profile, or provide
 separate `--data-dir` paths. Uninstalling does not delete user profile data.
 
-The release workflow explicitly dispatches WinGet and Flathub preparation after
-publication. This is necessary because releases created by `GITHUB_TOKEN` do not
+The release workflow explicitly dispatches the Flatpak Pages repository, WinGet,
+and Flathub preparation after publication. This is necessary because releases created by `GITHUB_TOKEN` do not
 start other `release` workflows. Store preparation/submission failures do not
 delete the already published GitHub release. Rerun the affected workflow with the
 same `release_tag` after fixing its cause.
+
+## GitHub Pages Flatpak repository
+
+The application update repository is served at
+[`https://voltkraft.github.io/WarThunder_Map_Helper/`](https://voltkraft.github.io/WarThunder_Map_Helper/).
+It provides a signed OSTree repository under `repo/`, an architecture-neutral
+`io.github.voltkraft.WarThunder_Map_Helper.flatpakref`, and
+`war-thunder-map-helper.flatpakrepo`. User installation and bundle migration
+commands live in [FLATPAK.md](FLATPAK.md#install-from-the-update-repository).
+
+The **Flatpak repository on GitHub Pages** workflow runs on `main` through an explicit
+release dispatch or a manual dispatch. An empty `release_tag` selects the newest
+public stable semantic version. An explicit tag must be that version; a retry
+of an older release fails instead of rolling users back. Both architectures
+must be present. The helper verifies the complete four-installer release set,
+the immutable tag/source identity, each downloaded Flatpak's size and GitHub
+SHA-256 digest, and the embedded AppStream ID/version before publication.
+It imports the already tested release commits without rebuilding the app.
+
+The repository contains the two newest stable releases' objects, with `stable`
+pointing at the newest for both architectures. Retaining the preceding release
+helps downloads crossing a deployment; it is not an indefinite rollback archive.
+Static deltas reduce HTTP request counts. Each deployment is rebuilt from public
+release assets, so artifact/cache expiry cannot lose the repository. A missing
+or invalid preceding release also fails the deployment; repair the release
+source rather than silently bypassing verification. GitHub Releases remain
+unchanged. No repository binaries or private keys are committed to Git.
+
+### One-time setup and signing identity
+
+Enable **Settings → Pages → Source: GitHub Actions**. With repository admin
+access, the equivalent first-time command is:
+
+```bash
+gh api --method POST repos/VoltKraft/WarThunder_Map_Helper/pages -f build_type=workflow
+```
+
+Reuse an existing Pages site instead of recreating it; this workflow publishes
+the whole site. Review the `github-pages` environment's deployment restrictions
+and allow `main`. The build job needs `contents: read` and `pages: read`; the
+deployment job needs `pages: write` and `id-token: write`. No deployment PAT is
+required. Existing SHA-pinned upload-artifact and github-script actions implement
+the Pages artifact/API protocol without another action dependency.
+
+The checked-in public key is
+[`repository-signing-key.asc`](../packaging/flatpak/repository-signing-key.asc),
+with fingerprint `9400819F0FA21004F261A4C8867E33A7207D8F25`.
+Store its matching ASCII-armored private key in the repository Actions secret
+`FLATPAK_GPG_PRIVATE_KEY`. The key is dedicated to this repository, has no
+passphrase for unattended signing, and must have a protected offline backup.
+To configure the secret from a secure existing GnuPG home:
+
+```bash
+gpg --homedir /secure/flatpak-signing --armor --export-secret-keys 9400819F0FA21004F261A4C8867E33A7207D8F25 | gh secret set FLATPAK_GPG_PRIVATE_KEY --repo VoltKraft/WarThunder_Map_Helper
+```
+
+Never print or commit the private export. The workflow imports it into an
+ephemeral GnuPG home outside the public artifact and removes it after use.
+The helper requires the secret to match the committed public fingerprint;
+both commits and repository metadata are signed. The descriptors embed that
+same public key, preserving signature verification on installation and update.
+Do not regenerate the identity on each run. Key replacement needs an explicit
+trust migration for installed clients before old signing material is retired;
+replacing only the website descriptor does not update existing clients' trust.
+
+### Manual publication and diagnosis
+
+After the signing secret and Pages source are configured, publish the existing
+latest release without altering it:
+
+```bash
+gh workflow run flatpak-pages.yml --ref main -f release_tag=v0.3.2
+gh run list --workflow flatpak-pages.yml --limit 5
+```
+
+For later releases omit `release_tag` to select the newest stable version.
+The workflow serializes build and deployment, checks for a newer release again
+before deployment, and fails on a missing secret or invalid signature source.
+Failed builds leave the last successful Pages deployment available. A successful
+deployment must also be checked through the public URL and a Flatpak client.
+
+For local preparation, use Python 3.11+, `flatpak`, `ostree`, GnuPG, network access,
+`GH_TOKEN` with repository read access, and `GNUPGHOME` pointing at the isolated
+signing keyring. From the repository root:
+
+```bash
+python3 scripts/flatpak_pages.py --repository VoltKraft/WarThunder_Map_Helper --base-url https://voltkraft.github.io/WarThunder_Map_Helper --public-key packaging/flatpak/repository-signing-key.asc --output-dir artifacts/flatpak-pages
+```
+
+The output directory must be new or empty; `GNUPGHOME` must stay outside it. The helper
+writes the public site, descriptors, and `release.json` containing release commit
+IDs and the public fingerprint; it prints a JSON summary including total bytes.
+It does not deploy locally. Downloads have a 180-second I/O timeout and a
+256 MiB per-bundle cap; packaging commands have a 10-minute timeout. Failures
+leave diagnostic partial output that must not be published. Choose a new output
+directory when retrying.
+
+The generated site is rejected above 950 MB, below GitHub Pages' 1 GB published
+site limit. Monitor bandwidth as usage grows; Pages has a soft 100 GB monthly
+limit. These constraints can require another static host in future. See the
+official [Pages limits](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits)
+and [Flatpak repository hosting](https://docs.flatpak.org/en/latest/hosting-a-repository.html).
 
 ## Local release builds and retries
 

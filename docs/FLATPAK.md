@@ -6,6 +6,55 @@ from source using the Freedesktop 26.08 Platform/SDK. The exact Microsoft .NET
 10.0.401 SDK archives are build-only inputs, pinned by their official SHA-512
 checksums. Neither the SDK nor a host .NET installation is needed at runtime.
 
+## Install from the update repository
+
+Install Flatpak using your Linux distribution's package manager, then open the
+[`.flatpakref`](https://voltkraft.github.io/WarThunder_Map_Helper/io.github.voltkraft.WarThunder_Map_Helper.flatpakref)
+in a Flatpak-aware software manager, or run:
+
+```bash
+flatpak install --user https://voltkraft.github.io/WarThunder_Map_Helper/io.github.voltkraft.WarThunder_Map_Helper.flatpakref
+flatpak run io.github.voltkraft.WarThunder_Map_Helper
+flatpak update --user io.github.voltkraft.WarThunder_Map_Helper
+```
+
+The descriptor selects the host architecture (`x86_64` or `aarch64`) and the
+`stable` branch. It embeds the public signing key and suggests the remote name
+`war-thunder-map-helper`. Accept the Flathub runtime source when prompted;
+Flathub supplies the Freedesktop runtime, while this project's GitHub Pages
+repository supplies the application. No Flathub application listing is required.
+Flatpak-enabled software managers can also offer subsequent updates.
+
+To add the repository explicitly instead:
+
+```bash
+flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+flatpak remote-add --user --if-not-exists war-thunder-map-helper https://voltkraft.github.io/WarThunder_Map_Helper/war-thunder-map-helper.flatpakrepo
+flatpak install --user war-thunder-map-helper io.github.voltkraft.WarThunder_Map_Helper//stable
+```
+
+For an existing per-user bundle installation, close the app, back up its profile,
+add both remotes as above, and switch the installed application's origin:
+
+```bash
+flatpak install --user --reinstall war-thunder-map-helper io.github.voltkraft.WarThunder_Map_Helper//stable
+flatpak info --user --show-origin io.github.voltkraft.WarThunder_Map_Helper
+```
+
+The origin should be `war-thunder-map-helper`. Application ID, sandbox, and profile
+location stay the same; no settings conversion is needed. Use `--system` instead
+of `--user` throughout when migrating a system-wide installation. Do not use
+`--delete-data`. GitHub Release bundles remain available for manual installation;
+they do not configure this update remote by themselves.
+
+If a remote with this name already exists, inspect it with
+`flatpak remotes --user --show-details`; `--if-not-exists` does not correct an old
+URL or key. Do not disable signature verification to resolve a mismatch. For a
+transient download failure during publication, refresh and retry with
+`flatpak update --user`. Report persistent signature or missing-object failures.
+The signing fingerprint and repository maintenance procedure are documented in
+[Distribution](DISTRIBUTION.md#github-pages-flatpak-repository).
+
 ## Regenerate the offline feed
 
 For each version change, update `Directory.Build.props`, `CHANGELOG.md`, and the
@@ -100,8 +149,8 @@ Custom icon files belong in its `icons/` directory or are imported through the
 desktop file picker. The app copies imported content into its own profile; it
 does not require continuing access to the original host path.
 
-Install a replacement bundle with `flatpak install --user` to update a GitHub
-installation. These bundles do not configure an application update remote.
+Install a replacement bundle with `flatpak install --user` to update a manual
+bundle installation, or switch to the update repository as described above.
 Preserve the application data directory when changing distribution channels.
 
 ## Data migration
