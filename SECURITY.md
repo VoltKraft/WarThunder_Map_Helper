@@ -27,6 +27,11 @@ deadline.
   `http://127.0.0.1:8111/`. It does not read game memory, inject code, run a
   listener, or bypass information hidden by the game. Use a trusted endpoint;
   ordinary HTTP traffic is unencrypted.
+- When a configured loopback API is unavailable, bounded background requests
+  probe directly connected private IPv4 networks and select the first API with
+  matching response schemas. This identifies an API, not the player or a trusted
+  machine. Use automatic discovery only on trusted LANs; an explicit remote
+  address pins the connection. See [connection behavior](docs/USAGE.md#connect-to-the-game).
 - Endpoint URLs containing credentials, query strings, or fragments are
   rejected. Network requests and icon inputs are bounded; SVG scripts,
   external resources, and document type declarations are rejected.

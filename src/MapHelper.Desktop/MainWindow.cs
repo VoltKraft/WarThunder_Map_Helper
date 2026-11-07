@@ -293,33 +293,51 @@ public sealed class MainWindow : Window
             var version = _sourceVersion;
             _cts = new(); var ct = _cts.Token;
             var demo = _mode.SelectedIndex == 1;
-            _modeLabel.Text = demo ? "DEMO · SAMPLE DATA" : "LOCAL CONNECTION";
+            _modeLabel.Text = demo ? "DEMO · SAMPLE DATA" : "LIVE · " + new Uri(_settings.ApiAddress).Authority;
             ToolTip.SetTip(_modeLabel, demo ? "Synthetic sample data" : _settings.ApiAddress);
             var parser = new TelemetryParser(); foreach (var pair in _settings.ColorOverrides) parser.ColorOverrides[pair.Key] = pair.Value;
             var address = new Uri(_settings.ApiAddress);
-            ITelemetrySource source = demo ? new DemoTelemetrySource(() => _clock.Elapsed.TotalSeconds) : new HttpTelemetrySource(address, () => _clock.Elapsed.TotalSeconds, parser);
+            var liveSource = demo ? null : new DiscoveringTelemetrySource(address, () => _clock.Elapsed.TotalSeconds, parser);
+            if (liveSource != null)
+                liveSource.ConnectionChanged += connection => Dispatcher.UIThread.Post(() =>
+                {
+                    if (version != _sourceVersion) return;
+                    _modeLabel.Text = connection.IsSearching ? "SEARCHING LOCAL NETWORK" : "LIVE · " + connection.Address.Authority;
+                    ToolTip.SetTip(_modeLabel, connection.Address.AbsoluteUri);
+                });
+            ITelemetrySource source = liveSource is null ? new DemoTelemetrySource(() => _clock.Elapsed.TotalSeconds) : liveSource;
             _readerTask = Task.Run(async () =>
             {
                 await using var ownedSource = source;
-                var iconImportAttempted = false;
+                Uri? iconImportAddress = null;
                 Task? iconImport = null;
+                CancellationTokenSource? iconImportCancellation = null;
                 try
                 {
                     await foreach (var packet in source.ReadAsync(ct))
                     {
                         Dispatcher.UIThread.Post(() => { if (version == _sourceVersion) _engine.Accept(packet); });
-                        if (!demo && packet.Map != null && !iconImportAttempted)
+                        var activeAddress = liveSource?.CurrentAddress;
+                        if (activeAddress != null && packet.Map != null && iconImportAddress != activeAddress)
                         {
-                            iconImportAttempted = true;
+                            if (iconImportCancellation != null)
+                            {
+                                await iconImportCancellation.CancelAsync();
+                                if (iconImport != null) try { await iconImport; } catch (OperationCanceledException) { }
+                                iconImportCancellation.Dispose();
+                            }
+                            iconImportAddress = activeAddress;
+                            iconImportCancellation = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                            var importToken = iconImportCancellation.Token;
                             iconImport = Task.Run(async () =>
                             {
                                 try
                                 {
-                                    var count = await OriginalIconImporter.ImportAsync(address, ct);
+                                    var count = await OriginalIconImporter.ImportAsync(activeAddress, importToken);
                                     if (count > 0) Dispatcher.UIThread.Post(() => { if (version == _sourceVersion) _icons.Reload(); });
                                 }
                                 catch (Exception ex) when (ex is HttpRequestException or IOException or InvalidDataException or OperationCanceledException or System.Xml.XmlException) { AppPaths.Log("Original icons: " + ex.Message); }
-                            }, ct);
+                            }, importToken);
                         }
                     }
                 }
@@ -329,7 +347,12 @@ public sealed class MainWindow : Window
                     AppPaths.Log(ex.ToString());
                     Dispatcher.UIThread.Post(() => { if (version == _sourceVersion) ToolTip.SetTip(_status, "Data source: " + ex.Message); });
                 }
-                finally { if (iconImport != null) try { await iconImport; } catch (OperationCanceledException) { } }
+                finally
+                {
+                    if (iconImportCancellation != null) await iconImportCancellation.CancelAsync();
+                    if (iconImport != null) try { await iconImport; } catch (OperationCanceledException) { }
+                    iconImportCancellation?.Dispose();
+                }
             });
         }
         finally { _restartGate.Release(); }

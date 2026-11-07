@@ -8,14 +8,25 @@ Both specifications were checked on their official websites for this update.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-07
+
 ### Added
 
+- Background discovery of reachable War Thunder APIs on directly connected
+  private IPv4 networks when the configured localhost API is unavailable,
+  with bounded probes, automatic session-only fallback, and visible connection
+  addresses. Manual remote addresses remain fixed.
 - Signed Flatpak update repository on GitHub Pages for Linux x86_64 and ARM64,
   with `.flatpakref` installation and `.flatpakrepo` remote setup alongside
   the existing GitHub Release bundles.
 - Release-triggered Pages deployment from verified published bundle digests,
   with a persistent signing identity, stale-version rejection, bounded repository
   size, and retention of the preceding release's objects.
+
+### Fixed
+
+- Continue polling after structurally invalid or oversized API responses so
+  an unavailable local feed can recover or trigger network discovery.
 
 ## [0.3.2] - 2026-10-14
 
@@ -150,7 +161,8 @@ automation; it does not claim an earlier GitHub release or tag exists.
 - Logic, integration, and Avalonia interaction tests, with recorded API
   fixtures and documented live-game validation limits.
 
-[Unreleased]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.3.2...HEAD
+[Unreleased]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.3.2...v0.4.0
 [0.3.2]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.2.4...v0.3.0

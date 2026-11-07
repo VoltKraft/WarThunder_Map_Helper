@@ -8,8 +8,9 @@ service.
 ```mermaid
 flowchart LR
     API[Game HTTP API] --> HTTP[HttpTelemetrySource]
+    HTTP --> Discovery[DiscoveringTelemetrySource]
     Demo[Explicit synthetic demo] --> Source[ITelemetrySource]
-    HTTP --> Source
+    Discovery --> Source
     Source --> Engine[MapEngine]
     Engine --> Tracker[ContactTracker and RangeEstimator]
     Tracker --> Scene[MapScene]
@@ -46,6 +47,16 @@ The source polls map information, map objects/image, player state, indicators,
 mission state, and HUD events independently. Slow or failed optional endpoints
 must not freeze the map. The application starts and remains usable when the
 game is closed; it never silently substitutes demo data for failed live data.
+
+`DiscoveringTelemetrySource` owns one HTTP reader at a time and runs bounded
+`NetworkApiDiscovery` passes alongside failed loopback polling. Local recovery
+cancels discovery. A validated LAN result replaces the reader only after the
+old reader is cancelled and joined. Packet epochs advance across host changes,
+including an immediate reset packet, so identical map generations on different
+computers cannot share contacts or estimates. Connection callbacks are marshalled
+to the UI, and icon imports follow the active address. Discovery never rewrites
+persisted settings. Search scope, timing, and host-selection behavior are
+specified in [Connect to the game](USAGE.md#connect-to-the-game).
 
 Objects may lack stable IDs. Contact association is therefore an estimate,
 and ambiguous matches must not produce false speed or identity claims.

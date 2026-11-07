@@ -8,6 +8,34 @@ you can enter another HTTP or HTTPS address, such as the address of the game
 computer on your local network. Credentials, query parameters, and URL
 fragments are not accepted. The game computer's browser map must be reachable.
 
+When a loopback address (`127.0.0.1`, `localhost`, or `::1`) stops providing
+the map-object feed, the app searches directly connected private IPv4 networks
+in the background while continuing local requests. **SEARCHING LOCAL NETWORK**
+indicates an active search; the live connection label shows the selected host
+and port, with the full address in its tooltip. The first host with matching
+War Thunder endpoint responses is used automatically. If several game computers
+are available, enter the intended computer's address under **Connection** to
+select it explicitly and disable automatic discovery.
+
+Searches retain the configured protocol, port (normally `8111`), and base path.
+Each pass checks at most 1,024 addresses across up to eight active private IPv4
+subnets, with at most 32 concurrent probes, one second per host, a 256 KiB
+limit per response, and a 35-second overall deadline. Unsuccessful passes wait
+at least 30 seconds before retrying. Larger subnets are covered in rotating
+pages beginning near this computer's address. IPv6 discovery, public networks,
+tunnel interfaces, HTTP redirects, and proxies are excluded. Other networks
+and IPv6 hosts can still be configured manually. The game API and the game
+computer's firewall must permit access from this computer.
+
+Discovery checks map metadata and map objects; an idle API must additionally
+provide the expected inactive state response. An ordinary web server is not
+enough. A local map-object response cancels an ongoing search. Once connected
+to a discovered computer, the app keeps it selected until its object feed has
+failed for three seconds, then retries the configured local address and resumes
+discovery when needed. A host change clears the old map, contacts, events, and
+estimates and loads icons from the new host. Found addresses are not saved:
+restarting or saving connection settings starts from the configured address.
+
 The endpoint is optional at application startup. Without game data, the
 application waits; it never switches to sample data automatically. Select
 **Demo** explicitly to see a synthetic scenario.

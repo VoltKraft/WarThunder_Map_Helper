@@ -13,7 +13,7 @@ internal sealed class SettingsWindow : Window
 {
     public SettingsWindow(AppSettings settings)
     {
-        Title = "Connection · War Thunder Map Helper"; Width = 570; Height = 510; CanResize = false;
+        Title = "Connection · War Thunder Map Helper"; Width = 570; Height = 550; CanResize = false;
         Background = new SolidColorBrush(Color.Parse("#101B29"));
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
         var address = new TextBox { Text = settings.ApiAddress };
@@ -42,7 +42,7 @@ internal sealed class SettingsWindow : Window
             Children =
         {
             new TextBlock { Text = "Connect to the game", FontSize = 23, FontWeight = FontWeight.SemiBold },
-            new TextBlock { Text = "The local browser map must be reachable during a mission.", TextWrapping = TextWrapping.Wrap, Foreground = Brushes.LightSlateGray }, address,
+            new TextBlock { Text = "If the localhost API is unavailable, the app searches your local network and connects automatically. Enter a remote address to use only that computer.", TextWrapping = TextWrapping.Wrap, Foreground = Brushes.LightSlateGray }, address,
             new TextBlock { Text = "Additional ally colors (comma-separated)" }, allies,
             new TextBlock { Text = "Additional enemy colors (comma-separated)" }, enemies,
             new TextBlock { Text = "Additional squad colors (comma-separated)" }, squad, error, save

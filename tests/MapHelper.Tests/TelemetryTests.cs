@@ -115,6 +115,7 @@ public class TelemetryTests
     private sealed class FakeHandler : HttpMessageHandler
     {
         public bool DelayFailureUntilNextMap;
+        public bool MalformedFirstObjects;
         private int _mapCalls, _stateCalls;
         public readonly Dictionary<string, int> Active = [];
         public bool Overlap;
@@ -132,7 +133,11 @@ public class TelemetryTests
                     await Task.Delay(50, ct);
                     throw new HttpRequestException("Previous map request failed late");
                 }
-                if (path == "/map_obj.json" && Interlocked.Increment(ref ObjectCalls) == 1) throw new HttpRequestException("simulated offline");
+                if (path == "/map_obj.json" && Interlocked.Increment(ref ObjectCalls) == 1)
+                {
+                    if (MalformedFirstObjects) return new(HttpStatusCode.OK) { Content = new StringContent("{}") };
+                    throw new HttpRequestException("simulated offline");
+                }
                 var body = path switch
                 {
                     "/map_info.json" => "{\"valid\":true,\"map_generation\":" + (DelayFailureUntilNextMap ? Interlocked.Increment(ref _mapCalls) : 1) + ",\"map_min\":[0,0],\"map_max\":[10000,20000]}",
@@ -164,10 +169,12 @@ public class TelemetryTests
         Assert.DoesNotContain(packets, p => !p.Success && p.Error == "Previous map request failed late");
         Assert.Contains(packets, p => p.Endpoint == Endpoint.State && p.Success && p.Epoch == 2);
     }
-    [Fact]
-    public async Task IndependentPollingRecoversAndDoesNotOverlapSlowEndpoints()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task IndependentPollingRecoversAndDoesNotOverlapSlowEndpoints(bool malformedObjects)
     {
-        var handler = new FakeHandler(); var clock = Stopwatch.StartNew();
+        var handler = new FakeHandler { MalformedFirstObjects = malformedObjects }; var clock = Stopwatch.StartNew();
         await using var source = new HttpTelemetrySource(new("http://localhost:8111/"), () => clock.Elapsed.TotalSeconds, handler: handler);
         using var ct = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         var packets = new List<TelemetryPacket>();

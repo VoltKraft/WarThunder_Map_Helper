@@ -5,6 +5,29 @@ observations. Commands are described in [Development](DEVELOPMENT.md) and
 [Distribution](DISTRIBUTION.md). Local checks do not establish successful
 GitHub Actions execution or publication to a package repository.
 
+## Background API discovery on 2026-11-07
+
+- Release solution build passed with zero warnings or errors using the pinned
+  .NET 10.0.401 SDK. All 282 tests passed: 205 logic/integration and 77 headless
+  UI tests.
+- New mocked tests cover API recognition, idle responses, non-game rejection,
+  response-size limits with and without Content-Length, header/body deadlines,
+  cancellation and draining concurrent probes, bounded private-subnet traversal,
+  and rotating coverage of larger subnets.
+- Source tests cover continued polling during discovery, cancellation on local
+  recovery, the retry cooldown after recovery and failed searches, fixed manual
+  remote addresses, host-switch epoch isolation, fallback failure recovery, and
+  shutdown. A regression test verifies recovery after malformed map-object data.
+- Whitespace verification, dependency-license validation (26 desktop dependencies),
+  and final diff whitespace checks passed. No dependencies were added or updated.
+- The subsequent version update to 0.4.0 passed the release metadata validator,
+  all 31 release-tooling tests, and a fresh Release solution build with zero
+  warnings or errors. Project, changelog, and AppStream versions agree; this
+  records local preparation, not publication of a release.
+- Discovery requests were mocked; no live LAN scan or real game failover was
+  performed. Native Windows/ARM64, Flatpak, and graphical smoke checks were not
+  run for this change. These remain platform/runtime validation limits.
+
 ## Framework build reproducibility follow-up on 2026-10-14
 
 Release 0.3.1 was published from `4c70f0b48bb011691a1114107321f098d5247ea3`

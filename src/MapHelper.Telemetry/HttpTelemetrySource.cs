@@ -156,7 +156,7 @@ public sealed class HttpTelemetrySource : ITelemetrySource
                     }
                 }
             }
-            catch (Exception ex) when (!ct.IsCancellationRequested && ex is HttpRequestException or IOException or JsonException or TaskCanceledException or InvalidOperationException or ArgumentException or OverflowException)
+            catch (Exception ex) when (!ct.IsCancellationRequested && ex is HttpRequestException or IOException or InvalidDataException or JsonException or TaskCanceledException or InvalidOperationException or ArgumentException or OverflowException)
             {
                 // A timeout from an earlier map must not reset the new session's estimates.
                 if (epoch != Interlocked.Read(ref _epoch)) continue;
