@@ -5,6 +5,29 @@ observations. Commands are described in [Development](DEVELOPMENT.md) and
 [Distribution](DISTRIBUTION.md). Local checks do not establish successful
 GitHub Actions execution or publication to a package repository.
 
+## Dependency servicing on 2026-11-14
+
+- Update Microsoft.NET.Test.Sdk to 18.12.0 in both test projects. Its changed
+  transitive packages (TestHost, ObjectModel, and CodeCoverage) declare MIT in
+  their exact-version official NuGet archives.
+- Pin SDK 10.0.404 for the SDK-bundled VSTest fix for
+  [CVE-2026-105544](https://github.com/microsoft/vstest/issues/16654), and update
+  the self-contained runtime from 10.0.12 to 10.0.15. SDK archive license and
+  third-party notice files are unchanged; upstream runtime notices are unchanged.
+- Regenerate Linux x64 and ARM64 feeds using the documented tools and fresh
+  caches. The merged feed contains 30 verified entries; only the four runtime
+  package versions and their official archive hashes changed.
+- Release build, all 282 C# tests (205 logic/integration and 77 headless UI),
+  whitespace verification, and the desktop dependency-license gate passed.
+  Python validation passed 110 script tests (one platform-specific skip) and
+  95 tooling tests. Release metadata agrees on version 0.4.1.
+- The desktop-only license gate cannot audit the entire existing test graph:
+  unchanged xunit.abstractions 2.0.3 lacks a declared nuspec license. The changed
+  test packages were reviewed directly against their official MIT declarations.
+- Native Windows/ARM64 packaging, graphical smoke tests, and Flatpak builds are
+  checked by CI before merge and again on the immutable release source. No real
+  game session or LAN failover was tested locally for this servicing update.
+
 ## Background API discovery on 2026-11-07
 
 - Release solution build passed with zero warnings or errors using the pinned

@@ -28,10 +28,14 @@
   <screenshots>
     <screenshot type="default">
       <caption>Map and telemetry using sample data</caption>
-      <image>https://raw.githubusercontent.com/VoltKraft/WarThunder_Map_Helper/v0.4.0/packaging/flatpak/screenshots/map.png</image>
+      <image>https://raw.githubusercontent.com/VoltKraft/WarThunder_Map_Helper/v0.4.1/packaging/flatpak/screenshots/map.png</image>
     </screenshot>
   </screenshots>
   <releases>
+    <release version="0.4.1" date="2026-11-14">
+      <description><p>Update the bundled .NET runtime to 10.0.15 and build with
+      the patched .NET SDK 10.0.404 and updated test tooling.</p></description>
+    </release>
     <release version="0.4.0" date="2026-11-07">
       <description><p>Discover reachable game APIs on private local networks
       when localhost is unavailable, show the selected connection, and recover
