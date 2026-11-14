@@ -3,7 +3,7 @@
 The Linux bundles target native `x86_64` and `aarch64` and share application ID
 `io.github.voltkraft.WarThunder_Map_Helper`. The manifest compiles the application
 from source using the Freedesktop 26.08 Platform/SDK. The exact Microsoft .NET
-10.0.401 SDK archives are build-only inputs, pinned by their official SHA-512
+10.0.404 SDK archives are build-only inputs, pinned by their official SHA-512
 checksums. Neither the SDK nor a host .NET installation is needed at runtime.
 
 ## Install from the update repository

@@ -8,6 +8,20 @@ Both specifications were checked on their official websites for this update.
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-11-14
+
+### Security
+
+- Update the pinned .NET SDK to 10.0.404 to fix the SDK-bundled VSTest
+  vulnerability CVE-2026-105544. Updating the test NuGet package alone does not
+  replace the affected SDK test runner.
+
+### Changed
+
+- Update the self-contained .NET runtime from 10.0.12 to 10.0.15 and regenerate
+  the verified Linux x64/ARM64 offline package feeds.
+- Update Microsoft.NET.Test.Sdk to 18.12.0 in both test projects.
+
 ## [0.4.0] - 2026-11-07
 
 ### Added
@@ -161,7 +175,8 @@ automation; it does not claim an earlier GitHub release or tag exists.
 - Logic, integration, and Avalonia interaction tests, with recorded API
   fixtures and documented live-game validation limits.
 
-[Unreleased]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.3.2...v0.4.0
 [0.3.2]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/VoltKraft/WarThunder_Map_Helper/compare/v0.3.0...v0.3.1

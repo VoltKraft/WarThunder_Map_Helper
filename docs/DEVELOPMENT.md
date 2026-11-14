@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- Install the exact .NET SDK listed in `global.json` (10.0.401 for this release).
+- Install the exact .NET SDK listed in `global.json` (10.0.404 for this release).
   Builds deliberately fail rather than silently selecting a different SDK.
 - Windows x64/ARM64 or Linux x64/ARM64 for the application. MSI authoring and
   verification require Windows and Windows PowerShell 5.1 or newer.
@@ -76,8 +76,12 @@ The UI tests retain `xunit.v3` 3.2.2. Avalonia.Headless.XUnit 12.1.4 calls the
 `MissingMethodException` during discovery. Dependabot excludes major updates
 for this package until the Avalonia adapter supports that API. Recheck this
 restriction when updating the adapter; all UI tests must be discovered and
-pass before removing it. Both test projects continue to use VSTest and the
-commands above.
+pass before removing it. Both test projects use Microsoft.NET.Test.Sdk 18.12.0
+and continue to use VSTest and the commands above. SDK 10.0.404 fixes the SDK-bundled VSTest issue
+[CVE-2026-105544](https://github.com/microsoft/vstest/issues/16654); updating only
+the test project's NuGet package does not replace that runner. Install the exact
+SDK from `global.json` and check `dotnet --version` from the repository root
+before running tests.
 
 ## UI validation
 
